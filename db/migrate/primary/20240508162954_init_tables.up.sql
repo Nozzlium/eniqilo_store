@@ -4,9 +4,9 @@ CREATE TABLE IF NOT EXISTS "users" (
   "name" varchar(50),
   -- "username" varchar(255) NOT NULL,
   "password" varchar(100) NOT NULL,
-  "email" varchar(255) NULL DEFAULT NULL,
+  -- "email" varchar(255) NULL DEFAULT NULL,
   "phone_number" varchar(20) NOT NULL,
-  "email_verified_at" timestamp NULL DEFAULT NULL,
+  -- "email_verified_at" timestamp NULL DEFAULT NULL,
   "phone_verified_at" timestamp NULL DEFAULT NULL,
   "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -62,10 +62,10 @@ CREATE TABLE IF NOT EXISTS "products" (
   UNIQUE ("sku")
 );
 
-CREATE TABLE IF NOT EXISTS "customers" ()
+CREATE TABLE IF NOT EXISTS "customers" (
   id uuid NOT NULL,
   name varchar(50) NOT NULL,
-  email varchar(255) NULL DEFAULT NULL,
+  -- email varchar(255) NULL DEFAULT NULL,
   phone_number varchar(20) NOT NULL,
   created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS "customers" ()
   UNIQUE ("phone_number")
 );
 
-CREATE TABLE IF NOT EXISTS "orders" ()
+CREATE TABLE IF NOT EXISTS "orders" (
   id uuid NOT NULL,
   customer_id uuid NOT NULL,
   product_id uuid NOT NULL,
