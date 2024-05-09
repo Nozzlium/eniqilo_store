@@ -37,26 +37,19 @@ func (repository *UserRepository) Save(
       $2,
       $3,
       $4 
-    ) returning id;
+    ) ;
   `
 
 	var id uuid.UUID
-	err := repository.db.QueryRow(
+	_, err := repository.db.Exec(
 		ctx,
 		query,
 		user.ID,
 		user.PhoneNumber,
 		user.Password,
 		user.Name,
-	).Scan(&id)
+	)
 	if err != nil {
-		log.Println(err)
-		if errors.Is(
-			err,
-			pgx.ErrNoRows,
-		) {
-			return user, model.ErrConflict
-		}
 		return user, err
 	}
 

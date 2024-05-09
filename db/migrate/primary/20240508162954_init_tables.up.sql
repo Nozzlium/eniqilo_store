@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS "orders" (
   created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   deleted_at timestamp NULL DEFAULT NULL,
-  PRINARY KEY ("id"),
+  PRIMARY KEY ("id"),
   FOREIGN KEY ("customer_id") REFERENCES "customers" ("id") ON DELETE CASCADE,
   FOREIGN KEY ("product_id") REFERENCES "products" ("id") ON DELETE CASCADE
 );

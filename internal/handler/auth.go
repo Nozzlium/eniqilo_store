@@ -41,26 +41,22 @@ func InitAuthHandler(
 	return nil
 }
 
-type RegisterBody struct {
-	PhoneNumber string `json:"email"`
-	Name        string `json:"name"`
-	Password    string `json:"password"`
-}
-
-type LoginBody struct {
-	PhoneNumber string `json:"email"`
-	Password    string `json:"password"`
-}
-
 func (handlers *AuthHandler) RegisterHandler(
 	ctx *fiber.Ctx,
 ) error {
-	var body RegisterBody
+	var body model.RegisterBody
 	err := ctx.BodyParser(&body)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).
 			JSON(fiber.Map{
 				"message": err.Error(),
+			})
+	}
+
+	if !body.IsValid() {
+		return ctx.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{
+				"message": "invalid body",
 			})
 	}
 
@@ -98,13 +94,20 @@ func (handlers *AuthHandler) RegisterHandler(
 func (handlers *AuthHandler) Login(
 	ctx *fiber.Ctx,
 ) error {
-	var body LoginBody
+	var body model.LoginBody
 	err := ctx.BodyParser(&body)
 	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusInternalServerError).
 			JSON(fiber.Map{
 				"message": "unable to process body",
+			})
+	}
+
+	if !body.IsValid() {
+		return ctx.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{
+				"message": "invalid body",
 			})
 	}
 
