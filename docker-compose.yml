@@ -8,13 +8,14 @@ services:
     ports:
       - 3000:3000
     env_file:
-      - ./configs/.env.dev
+      - path: .env
+        required: true
     volumes:
       - .:/app
   db:
     image: postgres:16
     env_file:
-      - path: ./configs/.env.dev
+      - path: .env
         required: true
     environment:
       - POSTGRES_USER=${DB_USERNAME}

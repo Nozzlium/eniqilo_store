@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 -- 
 -- CREATE INDEX "access_tokens_tokenable_type_tokenable_id_index" ON "access_tokens" ("tokenable_type","tokenable_id");
 
-CREATE TYPE "category" AS ENUM ("clothing", "accessories", "footwear", "beverages");
+CREATE TYPE "category" AS ENUM ('clothing', 'accessories', 'footwear', 'beverages');
 
 CREATE TABLE IF NOT EXISTS "products" (
   id uuid NOT NULL,
