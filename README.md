@@ -1,4 +1,4 @@
-# CAT SOCIAL NETWORK
+# ENIQILO STORE
 
 This is a mini e-commerce application where some people can register as cashier a.k.a staff to maintain products and anyone can register as customer to buy anything available from the store. This project is developed using [Golang](https://golang.org), [PostgreSQL](https://www.postgresql.org), and [Docker](https://www.docker.com). We use [Gofiber](https://gofiber.io) as the main web framework for this project, [pgx](https://github.com/jackc/pgx) as the main PostgreSQL driver and [golang-migrate](https://github.com/golang-migrate/migrate) for the migration.
 
