@@ -6,6 +6,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/caarlos0/env/v11"
 	"github.com/gofiber/fiber/v2"
+	"github.com/nozzlium/eniqilo_store/internal/app"
 	"github.com/nozzlium/eniqilo_store/internal/client"
 	"github.com/nozzlium/eniqilo_store/internal/config"
 	"github.com/nozzlium/eniqilo_store/internal/handler"
@@ -33,7 +34,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	userRepository := repository.NewUserRepository(db)
+	userRepository := repository.NewUserRepository(
+		db,
+	)
 
 	userService := service.NewUserService(
 		userRepository,
@@ -48,6 +51,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	app.InitCustomer(fiberApp, nil)
 
 	err = fiberApp.Listen(":3000")
 	if err != nil {
