@@ -68,6 +68,12 @@ func (repo *CustomerRepository) FindByPhoneNumber(
 		phoneNumber,
 	).Scan(&customer.ID, &customer.PhoneNumber, &customer.Name)
 	if err != nil {
+		if errors.Is(
+			err,
+			pgx.ErrNoRows,
+		) {
+			return customer, model.ErrNotFound
+		}
 		return customer, err
 	}
 
