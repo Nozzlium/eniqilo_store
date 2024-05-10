@@ -176,13 +176,13 @@ func buildQuery(
 
 	if paramCounter == 0 {
 		return fmt.Sprintf(
-			"%s;",
+			"%s order by created_at desc;",
 			base,
 		), params
 	}
 
 	return fmt.Sprintf(
-		"%s where %s;",
+		"%s where %s order by created_at desc;",
 		base,
 		strings.Join(
 			paramQueries,
