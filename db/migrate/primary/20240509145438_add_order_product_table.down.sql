@@ -1,9 +1,9 @@
 ALTER TABLE "orders"
-  ADD COLUMN "product_id",
-  ADD COLUMN "quantity",
-  ADD COLUMN "price";
+  ADD COLUMN "product_id" uuid not null,
+  ADD COLUMN "quantity" int not null,
+  ADD COLUMN "price" numeric(10,2) NOT NULL;
 
 ALTER TABLE "orders"
-  ADD CONSTRAINT FOREIGN KEY ("product_id") REFERENCES "products" ("id");
+  ADD CONSTRAINT fk_order_product_product FOREIGN KEY ("product_id") REFERENCES "products" ("id");
 
 DROP TABLE IF EXISTS "order_product";

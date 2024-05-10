@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/nozzlium/eniqilo_store/internal/model"
 )
@@ -14,7 +13,9 @@ type UserRepository struct {
 	db *pgx.Conn
 }
 
-func NewUserRepository(db *pgx.Conn) *UserRepository {
+func NewUserRepository(
+	db *pgx.Conn,
+) *UserRepository {
 	return &UserRepository{
 		db: db,
 	}
@@ -40,7 +41,6 @@ func (repository *UserRepository) Save(
     ) ;
   `
 
-	var id uuid.UUID
 	_, err := repository.db.Exec(
 		ctx,
 		query,
@@ -51,10 +51,6 @@ func (repository *UserRepository) Save(
 	)
 	if err != nil {
 		return user, err
-	}
-
-	if id != user.ID {
-		return user, model.ErrSavingData
 	}
 
 	return user, nil

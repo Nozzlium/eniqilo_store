@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -14,7 +15,6 @@ import (
 
 type CustomerService struct {
 	CustomerRepository *repository.CustomerRepository
-	Conn               *pgx.Conn
 	PhoneNumberRegex   *regexp.Regexp
 }
 
@@ -24,10 +24,43 @@ type CustomerData struct {
 	Name        string `json:"name"`
 }
 
+func NewCustomerService(
+	customerRepository *repository.CustomerRepository,
+	phoneNumberRegex *regexp.Regexp,
+) (*CustomerService, error) {
+	if customerRepository == nil {
+		return nil, errors.New(
+			"cannot init, customer repository is nil",
+		)
+	}
+
+	return &CustomerService{
+		CustomerRepository: customerRepository,
+		PhoneNumberRegex:   phoneNumberRegex,
+	}, nil
+}
+
 func (service *CustomerService) Create(
 	ctx context.Context,
 	customer model.Customer,
 ) (model.Customer, error) {
+	savedCustomer, err := service.CustomerRepository.FindByPhoneNumber(
+		ctx,
+		customer.PhoneNumber,
+	)
+	if err != nil {
+		if !errors.Is(
+			err,
+			model.ErrNotFound,
+		) {
+			return customer, err
+		}
+	}
+
+	if savedCustomer.PhoneNumber == customer.PhoneNumber {
+		return customer, model.ErrConflict
+	}
+
 	newID, err := uuid.NewV7()
 	if err != nil {
 		return model.Customer{}, err
@@ -36,7 +69,6 @@ func (service *CustomerService) Create(
 	customer.ID = newID
 	saved, err := service.CustomerRepository.Save(
 		ctx,
-		service.Conn,
 		customer,
 	)
 	if err != nil {
@@ -50,13 +82,9 @@ func (service *CustomerService) FindCustomers(
 	ctx context.Context,
 	customer model.Customer,
 ) ([]CustomerData, error) {
-	customer.PhoneNumber = validatePhoneNumberWildCard(
-		customer.PhoneNumber,
-	)
-
 	customerData, err := findAllCustomers(
 		ctx,
-		service.Conn,
+		service.CustomerRepository.DB,
 		customer,
 	)
 	if err != nil {
@@ -66,36 +94,16 @@ func (service *CustomerService) FindCustomers(
 	return customerData, nil
 }
 
-func validatePhoneNumberWildCard(
-	phoneNumber string,
-) string {
-	fmt.Println(phoneNumber)
-	if phoneNumber == "" {
-		return ""
-	}
-	prefix := "+62"
-	length := 3
-	if len(phoneNumber) < 3 {
-		length = len(phoneNumber)
-	}
-	for i := 0; i < length; i++ {
-		if prefix[i] != phoneNumber[i] {
-			return ""
-		}
-	}
-	return phoneNumber
-}
-
 func findAllCustomers(
 	ctx context.Context,
-	conn *pgx.Conn,
+	db *pgx.Conn,
 	customer model.Customer,
 ) ([]CustomerData, error) {
 	query, params := buildQuery(
 		customer,
 	)
 
-	rows, err := conn.Query(
+	rows, err := db.Query(
 		ctx,
 		query,
 		params...)
@@ -147,7 +155,7 @@ func buildQuery(
 		)
 		params = append(
 			params,
-			customer.PhoneNumber,
+			"+"+customer.PhoneNumber,
 		)
 	}
 

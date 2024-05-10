@@ -2,11 +2,11 @@ package main
 
 import (
 	"log"
+	"regexp"
 
 	"github.com/bytedance/sonic"
 	"github.com/caarlos0/env/v11"
 	"github.com/gofiber/fiber/v2"
-	"github.com/nozzlium/eniqilo_store/internal/app"
 	"github.com/nozzlium/eniqilo_store/internal/client"
 	"github.com/nozzlium/eniqilo_store/internal/config"
 	"github.com/nozzlium/eniqilo_store/internal/handler"
@@ -37,12 +37,27 @@ func main() {
 	userRepository := repository.NewUserRepository(
 		db,
 	)
+	customerRepository, err := repository.NewCustomerRepository(
+		db,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	userService := service.NewUserService(
 		userRepository,
 		cfg.JWTSecret,
 		int(cfg.BCryptSalt),
 	)
+	customerService, err := service.NewCustomerService(
+		customerRepository,
+		regexp.MustCompile(
+			"^[+]{1}[0-9]{10,15}$",
+		),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	err = handler.InitAuthHandler(
 		fiberApp,
@@ -51,8 +66,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	app.InitCustomer(fiberApp, nil)
+	err = handler.InitCustomerHandler(
+		fiberApp,
+		customerService,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	err = fiberApp.Listen(":3000")
 	if err != nil {
