@@ -17,8 +17,8 @@ func BuildQueryStringAndParams(
 	}
 
 	pagination, paginationParams := paginationBuilder()
-	params = append(params, paginationParams...)
 	fmt.Fprintf(baseQuery, fmt.Sprintf(" %s", pagination), len(params)+1, len(params)+2)
+	params = append(params, paginationParams...)
 
 	orderBy, orderByParams := orderByBuilder()
 	if len(orderByParams) > 0 {
