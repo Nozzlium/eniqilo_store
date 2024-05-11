@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/nozzlium/eniqilo_store/internal/constant"
 	"github.com/nozzlium/eniqilo_store/internal/model"
 	"github.com/nozzlium/eniqilo_store/internal/repository"
 	"github.com/nozzlium/eniqilo_store/internal/util"
@@ -47,6 +49,15 @@ func (s ProductService) Save(ctx context.Context, product model.Product) (string
 	id, err := uuid.NewV7()
 	if err != nil {
 		return "", "", err
+	}
+
+	existingProduct, err := s.repository.FindBySKU(ctx, product.SKU)
+	if err != nil && !errors.Is(err, constant.ErrNotFound) {
+		return "", "", fmt.Errorf("failed to find product: %v", err)
+	}
+
+	if existingProduct.SKU == product.SKU {
+		return "", "", constant.ErrProductExists
 	}
 
 	product.ID = id

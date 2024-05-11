@@ -13,7 +13,7 @@ func BuildQueryStringAndParams(
 ) (string, []interface{}) {
 	where, params := whereBuilder()
 	for i, clause := range where {
-		fmt.Fprintf(baseQuery, " and %s", fmt.Sprintf(clause, i))
+		fmt.Fprintf(baseQuery, " and %s", fmt.Sprintf(clause, i+1))
 	}
 
 	pagination, paginationParams := paginationBuilder()
