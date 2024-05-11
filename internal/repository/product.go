@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -281,81 +282,48 @@ func (r *ProductRepository) FindByID(ctx context.Context, id string) (model.Prod
 	return p, nil
 }
 
-func (r *ProductRepository) SaveTx(
+func (r *ProductRepository) FindByIds(
 	ctx context.Context,
-	tx pgx.Tx,
-	product model.Product,
-) (model.Product, error) {
-	query := `
-  insert into products (
-    id,
-    name,
-    price,
-    stock,
-    notes,
-    category,
-    image_url
-  ) values 
-  ($1, $2, $3, $4, $5, $6, $7)
-  on conflict(id) do update set
-    name = excluded.name,
-    price = excluded.price,
-    stock = excluded.stock,
-    notes = excluded.notes,
-    category = excluded.category,
-    image_url = excluded.image_url
-  `
-
-	_, err := tx.Exec(ctx, query,
-		product.ID,
-		product.Name,
-		product.Price,
-		product.Stock,
-		product.Notes,
-		product.Category.ToDBEnumType(),
-		product.ImageURL,
-	)
-	if err != nil {
-		return model.Product{}, err
-	}
-
-	return product, nil
-}
-
-func (r *ProductRepository) FindById(
-	ctx context.Context,
-	id uuid.UUID,
-) (model.Product, error) {
+	ids []string,
+) (map[uuid.UUID]model.Product, error) {
 	query := `
     select 
-     * 
+      id, 
+      name, 
+      stock, 
+      price, 
+      is_available 
     from products
-    where id = $1;
+    where id = any('{$1}':uuid[])
   `
-	prod := model.Product{}
-	err := r.db.QueryRow(
+	rows, err := r.db.Query(
 		ctx,
 		query,
-		id,
-	).Scan(
-		&prod.ID,
-		&prod.Name,
-		&prod.SKU,
-		&prod.Stock,
-		&prod.Price,
-		&prod.Category,
-		&prod.Notes,
-		&prod.Location,
-		&prod.IsAvailable,
-		&prod.ImageURL,
-		&prod.CreatedAt,
-		&prod.UpdatedAt,
-		&prod.DeletedAt,
-		&prod.CreatedBy,
+		strings.Join(ids, ","),
 	)
 	if err != nil {
-		return model.Product{}, err
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make(
+		map[uuid.UUID]model.Product,
+	)
+	for rows.Next() {
+		temp := model.Product{}
+		err = rows.Scan(
+			&temp.ID,
+			&temp.Name,
+			&temp.Stock,
+			&temp.Price,
+			&temp.IsAvailable,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		res[temp.ID] = temp
 	}
 
-	return prod, nil
+	return res, nil
 }

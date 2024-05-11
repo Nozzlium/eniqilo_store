@@ -11,11 +11,25 @@ type OrderRepository struct {
 	DB *pgx.Conn
 }
 
-func (repo *OrderRepository) SaveTx(
+func (r *OrderRepository) Save(
 	ctx context.Context,
-	tx pgx.Tx,
 	order model.Order,
+	products []model.Product,
 ) (model.Order, error) {
+	tx, err := r.DB.Begin(
+		ctx,
+	)
+	if err != nil {
+		return model.Order{}, err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback(ctx)
+		} else {
+			tx.Commit(ctx)
+		}
+	}()
+
 	queryOrder := `
     insert into
       orders (
@@ -28,8 +42,8 @@ func (repo *OrderRepository) SaveTx(
       $1, $2, $3, $4, $5
     );
   `
-	_, err := tx.Exec(
-		ctx,
+	batch := &pgx.Batch{}
+	batch.Queue(
 		queryOrder,
 		order.ID,
 		order.CustomerID,
@@ -37,7 +51,45 @@ func (repo *OrderRepository) SaveTx(
 		order.PaymentAmount,
 		order.Change,
 	)
-	if err != nil {
+
+	queryOrderProduct := `
+    insert into
+      orders (
+        order_id,
+        product_id,
+        quantity,
+        price,
+        total_price
+    ) values (
+      $1, $2, $3, $4, $5
+    )
+  `
+	for _, orderProduct := range order.ProductOrders {
+		batch.Queue(
+			queryOrderProduct,
+			orderProduct.OrderID,
+			orderProduct.ProductID,
+			orderProduct.Quantity,
+			orderProduct.Price,
+			orderProduct.TotalPrice,
+		)
+	}
+
+	queryUpdateStock := `
+    update products 
+    set quantity = $1 
+    where id = $2;
+  `
+	for _, product := range products {
+		batch.Queue(
+			queryUpdateStock,
+			product.Stock,
+			product.ID,
+		)
+	}
+
+	batchRes := tx.SendBatch(ctx, batch)
+	if err := batchRes.Close(); err != nil {
 		return model.Order{}, err
 	}
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/nozzlium/eniqilo_store/internal/constant"
 	"github.com/nozzlium/eniqilo_store/internal/model"
 	"github.com/nozzlium/eniqilo_store/internal/service"
 )
@@ -31,15 +32,21 @@ func (handlers *OrderHandlers) Create(
 		len(body.ProductDetails),
 	)
 	for _, product := range body.ProductDetails {
+		productId, err := uuid.FromBytes(
+			[]byte(product.ProductID),
+		)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).
+				JSON(fiber.Map{
+					"message": err.Error(),
+				})
+		}
+
 		productModels = append(
 			productModels,
 			model.ProductOrder{
-				ProductID: uuid.MustParse(
-					product.ProductID,
-				),
-				Quantity: uint64(
-					product.Quantity,
-				),
+				ProductID: productId,
+				Quantity:  product.Quantity,
 			},
 		)
 	}
@@ -49,12 +56,20 @@ func (handlers *OrderHandlers) Create(
 			JSON(fiber.Map{"message": "invalid body"})
 	}
 
+	customerId, err := uuid.FromBytes(
+		[]byte(body.CustomerID),
+	)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).
+			JSON(fiber.Map{
+				"message": err.Error(),
+			})
+	}
+
 	res, err := handlers.OrderService.Create(
 		c.UserContext(),
 		model.Order{
-			CustomerID: uuid.FromString(
-				body.CustomerID,
-			),
+			CustomerID:    customerId,
 			PaymentAmount: body.Paid,
 			Change:        body.Change,
 			ProductOrders: productModels,
@@ -63,7 +78,7 @@ func (handlers *OrderHandlers) Create(
 	if err != nil {
 		if errors.Is(
 			err,
-			model.ErrNotFound,
+			constant.ErrNotFound,
 		) {
 			return c.Status(fiber.StatusNotFound).
 				JSON(fiber.Map{
@@ -72,21 +87,21 @@ func (handlers *OrderHandlers) Create(
 		}
 		if errors.Is(
 			err,
-			model.ErrInsufficientFund,
+			constant.ErrInsufficientFund,
 		) {
 			return c.Status(fiber.StatusBadRequest).
 				JSON(fiber.Map{"message": err.Error()})
 		}
 		if errors.Is(
 			err,
-			model.ErrInsufficientStock,
+			constant.ErrInsufficientStock,
 		) {
 			return c.Status(fiber.StatusBadRequest).
 				JSON(fiber.Map{"message": err.Error()})
 		}
 		if errors.Is(
 			err,
-			model.ErrInvalidChange,
+			constant.ErrInvalidChange,
 		) {
 			return c.Status(fiber.StatusBadRequest).
 				JSON(fiber.Map{"message": err.Error()})

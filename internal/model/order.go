@@ -49,7 +49,7 @@ func (order Order) ToResponseBody() OrderResponseBody {
 type ProductOrder struct {
 	OrderID    uuid.UUID
 	ProductID  uuid.UUID
-	Quantity   uint64
+	Quantity   int
 	Price      float64
 	TotalPrice float64
 }

@@ -3,9 +3,12 @@ package constant
 import "errors"
 
 var (
-	ErrConflict      = errors.New("account already exists")
 	ErrBadInput      = errors.New("invalid input")
 	ErrProductExists = errors.New("product already exists")
+
+	ErrConflict = errors.New(
+		"account already exists",
+	)
 
 	ErrInvalidBody = errors.New(
 		"invalid body",
