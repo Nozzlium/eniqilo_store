@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/nozzlium/eniqilo_store/internal/constant"
 	"github.com/nozzlium/eniqilo_store/internal/model"
 	"github.com/nozzlium/eniqilo_store/internal/service"
 )
@@ -15,34 +16,6 @@ type AuthHandler struct {
 
 func NewAuthHandler(userService *service.UserService) *AuthHandler {
 	return &AuthHandler{UserService: userService}
-}
-
-func InitAuthHandler(
-	app *fiber.App,
-	userService *service.UserService,
-) error {
-	if userService == nil {
-		return errors.New(
-			"cannot init, userService is nil",
-		)
-	}
-
-	authHandler := AuthHandler{
-		UserService: userService,
-	}
-
-	auth := app.Group("")
-	auth.Post(
-		"/register",
-		authHandler.RegisterHandler,
-	)
-
-	auth.Post(
-		"/login",
-		authHandler.Login,
-	)
-
-	return nil
 }
 
 func (handlers *AuthHandler) RegisterHandler(
@@ -75,7 +48,7 @@ func (handlers *AuthHandler) RegisterHandler(
 	if err != nil {
 		if errors.Is(
 			err,
-			model.ErrConflict,
+			constant.ErrConflict,
 		) {
 			return ctx.Status(fiber.StatusConflict).
 				JSON(fiber.Map{

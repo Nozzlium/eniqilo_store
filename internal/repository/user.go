@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/nozzlium/eniqilo_store/internal/constant"
 	"github.com/nozzlium/eniqilo_store/internal/model"
 )
 
@@ -37,10 +37,9 @@ func (repository *UserRepository) Save(
       $2,
       $3,
       $4 
-    ) ;
+    );
   `
 
-	var id uuid.UUID
 	_, err := repository.db.Exec(
 		ctx,
 		query,
@@ -51,10 +50,6 @@ func (repository *UserRepository) Save(
 	)
 	if err != nil {
 		return user, err
-	}
-
-	if id != user.ID {
-		return user, model.ErrSavingData
 	}
 
 	return user, nil
@@ -83,7 +78,7 @@ func (repository *UserRepository) FindByPhoneNumber(
 			err,
 			pgx.ErrNoRows,
 		) {
-			return user, model.ErrNotFound
+			return user, constant.ErrNotFound
 		}
 		return model.User{}, err
 	}
@@ -115,7 +110,7 @@ func (repository *UserRepository) FindByPhoneNumberAndID(
 			err,
 			pgx.ErrNoRows,
 		) {
-			return user, model.ErrNotFound
+			return user, constant.ErrNotFound
 		}
 		return model.User{}, err
 	}

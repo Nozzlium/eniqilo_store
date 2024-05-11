@@ -81,8 +81,9 @@ func (h *ProductHandler) Create(ctx *fiber.Ctx) error {
 	}
 
 	if !product.IsValid() {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "invalid body",
+		return HandleError(ctx, ErrorResponse{
+			message: "invalid body",
+			error:   fmt.Errorf("invalid body"),
 		})
 	}
 
