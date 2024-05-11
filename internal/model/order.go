@@ -13,6 +13,7 @@ type Order struct {
 	TotalPrice    big.Float
 	PaymentAmount big.Float
 	Change        big.Float
+	ProductOrders []ProductOrder
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	DeletedAt     time.Time
