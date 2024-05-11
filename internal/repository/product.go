@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/nozzlium/eniqilo_store/internal/model"
 	"github.com/nozzlium/eniqilo_store/internal/util"
@@ -87,22 +89,34 @@ func (r *ProductRepository) Save(ctx context.Context, product model.Product) err
   insert into products (
     id,
     name,
+    sku,
     price,
     stock,
     notes,
     category,
-    image_url
+    image_url,
+    is_available,
+    location,
+    created_at,
+    updated_at,
+    created_by
   ) values 
-  ($1, $2, $3, $4, $5, $6, $7)`
+  ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
 
 	_, err := r.db.Exec(ctx, query,
 		product.ID,
 		product.Name,
+		product.SKU,
 		product.Price,
 		product.Stock,
 		product.Notes,
 		product.Category.ToDBEnumType(),
 		product.ImageURL,
+		product.IsAvailable,
+		product.Location,
+		product.CreatedAt,
+		product.UpdatedAt,
+		product.CreatedBy,
 	)
 
 	if err != nil {
@@ -110,4 +124,144 @@ func (r *ProductRepository) Save(ctx context.Context, product model.Product) err
 	}
 
 	return nil
+}
+
+func (r *ProductRepository) Update(ctx context.Context, product model.Product) error {
+	query := `
+  update products set
+    name = $1,
+    sku = $2,
+    price = $3,
+    stock = $4,
+    notes = $5,
+    category = $6,
+    image_url = $7,
+    is_available = $8,
+    location = $9,
+    updated_at = $10,
+    updated_by = $11,
+  where id = $12`
+
+	_, err := r.db.Exec(ctx, query,
+		product.Name,
+		product.SKU,
+		product.Price,
+		product.Stock,
+		product.Notes,
+		product.Category.ToDBEnumType(),
+		product.ImageURL,
+		product.IsAvailable,
+		product.Location,
+		product.UpdatedAt,
+		product.UpdatedBy,
+		product.ID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *ProductRepository) Delete(ctx context.Context, id, deletedBy uuid.UUID, deletedAt time.Time) error {
+	query := `
+  update products set
+    deleted_at = $1,
+    deleted_by = $2,
+  where id = $3`
+
+	_, err := r.db.Exec(ctx, query,
+		deletedAt,
+		deletedBy,
+		id,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *ProductRepository) FindBySKU(ctx context.Context, sku string) (model.Product, error) {
+	var (
+		p        model.Product
+		category string
+	)
+
+	query := `select
+			id,
+			name,
+			sku,
+			category,
+			image_url,
+			stock,
+			notes,
+			price,
+			location, 
+			is_available
+    from products p 
+    where sku = $1`
+
+	row := r.db.QueryRow(ctx, query, sku)
+	err := row.Scan(
+		&p.ID,
+		&p.Name,
+		&p.SKU,
+		&category,
+		&p.ImageURL,
+		&p.Stock,
+		&p.Notes,
+		&p.Price,
+		&p.Location,
+		&p.IsAvailable,
+	)
+	if err != nil {
+		return p, err
+	}
+
+	p.Category = p.Category.FromDBEnumType(category)
+
+	return p, nil
+}
+
+func (r *ProductRepository) FindByID(ctx context.Context, id string) (model.Product, error) {
+	var (
+		p        model.Product
+		category string
+	)
+
+	query := `select
+			name,
+			sku,
+			category,
+			image_url,
+			stock,
+			notes,
+			price,
+			location, 
+			is_available
+    from products p 
+    where id = $1`
+
+	row := r.db.QueryRow(ctx, query, id)
+	err := row.Scan(
+		&p.Name,
+		&p.SKU,
+		&category,
+		&p.ImageURL,
+		&p.Stock,
+		&p.Notes,
+		&p.Price,
+		&p.Location,
+		&p.IsAvailable,
+	)
+	if err != nil {
+		return p, err
+	}
+
+	p.Category = p.Category.FromDBEnumType(category)
+
+	return p, nil
 }

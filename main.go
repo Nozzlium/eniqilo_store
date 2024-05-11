@@ -9,6 +9,7 @@ import (
 	"github.com/nozzlium/eniqilo_store/internal/client"
 	"github.com/nozzlium/eniqilo_store/internal/config"
 	"github.com/nozzlium/eniqilo_store/internal/handler"
+	"github.com/nozzlium/eniqilo_store/internal/middleware"
 	"github.com/nozzlium/eniqilo_store/internal/repository"
 	"github.com/nozzlium/eniqilo_store/internal/service"
 )
@@ -20,31 +21,7 @@ func main() {
 		Prefork:     true,
 	})
 
-	var cfg config.Config
-	opts := env.Options{
-		TagName: "json",
-	}
-	if err := env.ParseWithOptions(&cfg, opts); err != nil {
-		log.Fatalf("%+v\n", err)
-	}
-
-	db, err := client.InitDB(cfg.DB)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	userRepository := repository.NewUserRepository(db)
-
-	userService := service.NewUserService(
-		userRepository,
-		cfg.JWTSecret,
-		int(cfg.BCryptSalt),
-	)
-
-	err = handler.InitAuthHandler(
-		fiberApp,
-		userService,
-	)
+	err := setupApp(fiberApp)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,4 +30,63 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func setupApp(app *fiber.App) error {
+
+	var cfg config.Config
+	opts := env.Options{
+		TagName: "json",
+	}
+	if err := env.ParseWithOptions(&cfg, opts); err != nil {
+		log.Fatalf("%+v\n", err)
+		return err
+	}
+
+	db, err := client.InitDB(cfg.DB)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	// initiate repositories
+	userRepository := repository.NewUserRepository(db)
+	productRepository := repository.NewProductRepository(db)
+
+	// initiate services
+	userService := service.NewUserService(
+		userRepository,
+		cfg.JWTSecret,
+		int(cfg.BCryptSalt),
+	)
+
+	productService := service.NewProductService(productRepository)
+
+	// initiate handlers
+	authHandler := handler.NewAuthHandler(userService)
+	productHandler := handler.NewProductHandler(productService)
+
+	v1 := app.Group("/v1")
+	auth := v1.Group("/staff")
+	auth.Post(
+		"/register",
+		authHandler.RegisterHandler,
+	)
+
+	auth.Post(
+		"/login",
+		authHandler.Login,
+	)
+
+	product := v1.Group("/product")
+	product.Get("/customer", productHandler.SearchForCustomer)
+
+	// protected routes (require authentication)
+	protectedProduct := product.Use(middleware.Protected()).Use(middleware.SetEmailAndUserID())
+	protectedProduct.Get("", productHandler.Search)
+	protectedProduct.Post("", productHandler.Create)
+	protectedProduct.Put("/:id", productHandler.Update)
+	protectedProduct.Delete("/:id", productHandler.Delete)
+
+	return nil
 }
