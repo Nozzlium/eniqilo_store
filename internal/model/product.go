@@ -67,36 +67,71 @@ func (spq SearchProductQuery) BuildWhereClauseAndParams() ([]string, []interface
 
 	if spq.ID != "" {
 		params = append(params, spq.ID)
-		sqlClause = append(sqlClause, "id = $%d")
+		sqlClause = append(
+			sqlClause,
+			"id = $%d",
+		)
 	}
 
 	if spq.Name != "" {
-		params = append(params, fmt.Sprintf("%%%s%%", spq.Name))
-		sqlClause = append(sqlClause, "name ilike $%d")
+		params = append(
+			params,
+			fmt.Sprintf(
+				"%%%s%%",
+				spq.Name,
+			),
+		)
+		sqlClause = append(
+			sqlClause,
+			"name ilike $%d",
+		)
 	}
 
-	if spq.Category != "" && ProductCategory(spq.Category).IsValid() {
-		params = append(params, ProductCategory(spq.Category).ToDBEnumType())
-		sqlClause = append(sqlClause, "category = $%d")
+	if spq.Category != "" &&
+		ProductCategory(
+			spq.Category,
+		).IsValid() {
+		params = append(
+			params,
+			ProductCategory(
+				spq.Category,
+			).ToDBEnumType(),
+		)
+		sqlClause = append(
+			sqlClause,
+			"category = $%d",
+		)
 	}
 
 	if spq.SKU != "" {
 		params = append(params, spq.SKU)
-		sqlClause = append(sqlClause, "sku = $%d")
+		sqlClause = append(
+			sqlClause,
+			"sku = $%d",
+		)
 	}
 
 	if inStock := BooleanString(spq.InStock); inStock.IsValid() {
 		params = append(params, 0)
 		if inStock == True {
-			sqlClause = append(sqlClause, "stock > $%d")
+			sqlClause = append(
+				sqlClause,
+				"stock > $%d",
+			)
 		} else {
 			sqlClause = append(sqlClause, "stock = $%d")
 		}
 	}
 
 	if isAvailable := BooleanString(spq.IsAvailable); isAvailable.IsValid() {
-		params = append(params, isAvailable.ToBool())
-		sqlClause = append(sqlClause, "is_available = $%d")
+		params = append(
+			params,
+			isAvailable.ToBool(),
+		)
+		sqlClause = append(
+			sqlClause,
+			"is_available = $%d",
+		)
 	}
 
 	return sqlClause, params
@@ -113,7 +148,11 @@ func (spq SearchProductQuery) BuildPagination() (string, []interface{}) {
 	if spq.Offset > 0 {
 		offset = spq.Offset
 	}
-	params = append(params, limit, offset)
+	params = append(
+		params,
+		limit,
+		offset,
+	)
 
 	return "limit $%d offset $%d", params
 }
@@ -124,14 +163,30 @@ func (spq SearchProductQuery) BuildOrderByClause() ([]string, []interface{}) {
 		params    []interface{}
 	)
 
-	if spq.CreatedAt != "" || OrderBy(spq.CreatedAt).IsValid() {
-		params = append(params, OrderBy(spq.CreatedAt))
-		sqlClause = append(sqlClause, "created_at $%d")
+	if spq.CreatedAt != "" ||
+		OrderBy(
+			spq.CreatedAt,
+		).IsValid() {
+		params = append(
+			params,
+			OrderBy(spq.CreatedAt),
+		)
+		sqlClause = append(
+			sqlClause,
+			"created_at $%d",
+		)
 	}
 
-	if spq.Price != "" || OrderBy(spq.Price).IsValid() {
-		params = append(params, OrderBy(spq.Price))
-		sqlClause = append(sqlClause, "price $%d")
+	if spq.Price != "" ||
+		OrderBy(spq.Price).IsValid() {
+		params = append(
+			params,
+			OrderBy(spq.Price),
+		)
+		sqlClause = append(
+			sqlClause,
+			"price $%d",
+		)
 	}
 
 	return sqlClause, params
@@ -162,7 +217,9 @@ func (pc ProductCategory) ToDBEnumType() string {
 	}
 }
 
-func (pc ProductCategory) FromDBEnumType(enumType string) ProductCategory {
+func (pc ProductCategory) FromDBEnumType(
+	enumType string,
+) ProductCategory {
 	switch enumType {
 	case "clothing":
 		return Clothing
@@ -179,7 +236,10 @@ func (pc ProductCategory) FromDBEnumType(enumType string) ProductCategory {
 
 func (pc ProductCategory) IsValid() bool {
 	switch pc {
-	case Clothing, Accessories, Footwear, Beverages:
+	case Clothing,
+		Accessories,
+		Footwear,
+		Beverages:
 		return true
 	default:
 		return false
@@ -234,11 +294,13 @@ type Product struct {
 }
 
 func (p *Product) IsValid() bool {
-	if nameLen := len(p.Name); nameLen < 1 || nameLen > 30 {
+	if nameLen := len(p.Name); nameLen < 1 ||
+		nameLen > 30 {
 		return false
 	}
 
-	if skuLen := len(p.SKU); skuLen < 1 || skuLen > 30 {
+	if skuLen := len(p.SKU); skuLen < 1 ||
+		skuLen > 30 {
 		return false
 	}
 
@@ -251,7 +313,8 @@ func (p *Product) IsValid() bool {
 		return false
 	}
 
-	if notesLen := len(p.Notes); notesLen < 1 || notesLen > 200 {
+	if notesLen := len(p.Notes); notesLen < 1 ||
+		notesLen > 200 {
 		return false
 	}
 
@@ -259,11 +322,13 @@ func (p *Product) IsValid() bool {
 		return false
 	}
 
-	if stock := p.Stock; stock < 0 || stock > 100000 {
+	if stock := p.Stock; stock < 0 ||
+		stock > 100000 {
 		return false
 	}
 
-	if len(p.Location) < 1 || len(p.Location) > 200 {
+	if len(p.Location) < 1 ||
+		len(p.Location) > 200 {
 		return false
 	}
 
