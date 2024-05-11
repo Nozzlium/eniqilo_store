@@ -13,16 +13,16 @@ type CustomerRepository struct {
 }
 
 func NewCustomerRepository(
-	DB *pgx.Conn,
+	db *pgx.Conn,
 ) (*CustomerRepository, error) {
-	if DB == nil {
+	if db == nil {
 		return &CustomerRepository{}, errors.New(
 			"cannot init, db is nil",
 		)
 	}
 
 	return &CustomerRepository{
-		DB: DB,
+		DB: db,
 	}, nil
 }
 
