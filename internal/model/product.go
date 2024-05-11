@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nozzlium/eniqilo_store/internal/util"
 )
 
 type OrderBy string
@@ -185,19 +186,50 @@ func (pc ProductCategory) IsValid() bool {
 	}
 }
 
-type Product struct {
+type SearchProductResponse struct {
 	Category    ProductCategory `json:"category"`
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
-	DeletedAt   time.Time       `json:"deleted_at"`
+	ID          string          `json:"id"`
 	Name        string          `json:"name"`
 	SKU         string          `json:"sku"`
 	Notes       string          `json:"notes"`
-	ImageURL    string          `json:"image_url"`
+	ImageURL    string          `json:"imageUrl"`
 	Location    string          `json:"location"`
-	IsAvailable bool            `json:"is_available"`
+	CreatedAt   string          `json:"createdAt"`
+	IsAvailable bool            `json:"isAvailable"`
 	Stock       int             `json:"stock"`
 	Price       float64         `json:"price"`
+}
+
+func (spr *SearchProductResponse) FromProduct(product Product) {
+	spr.Category = product.Category
+	spr.CreatedAt = util.ToISO8601(product.CreatedAt)
+	spr.Name = product.Name
+	spr.SKU = product.SKU
+	spr.Notes = product.Notes
+	spr.ImageURL = product.ImageURL
+	spr.Location = product.Location
+	spr.IsAvailable = product.IsAvailable
+	spr.Stock = product.Stock
+	spr.Price = product.Price
+	spr.ID = product.ID.String()
+}
+
+type Product struct {
+	Category    ProductCategory `json:"category"`
+	CreatedAt   time.Time       `json:"createdAt"`
+	UpdatedAt   time.Time       `json:"updatedAt"`
+	DeletedAt   time.Time       `json:"deletedAt"`
+	Name        string          `json:"name"`
+	SKU         string          `json:"sku"`
+	Notes       string          `json:"notes"`
+	ImageURL    string          `json:"imageUrl"`
+	Location    string          `json:"location"`
+	IsAvailable bool            `json:"isAvailable"`
+	Stock       int             `json:"stock"`
+	Price       float64         `json:"price"`
+	CreatedBy   uuid.UUID       `json:"createdBy"`
+	UpdatedBy   uuid.UUID       `json:"updatedBy"`
+	DeletedBy   uuid.UUID       `json:"deletedBy"`
 	ID          uuid.UUID       `json:"id"`
 }
 
@@ -236,4 +268,50 @@ func (p *Product) IsValid() bool {
 	}
 
 	return true
+}
+
+func (p *Product) CompareAndUpdate(product Product) error {
+	hasUpdatedData := false
+	if product.Name != p.Name {
+		hasUpdatedData = true
+		p.Name = product.Name
+	}
+	if product.SKU != p.SKU {
+		hasUpdatedData = true
+		p.SKU = product.SKU
+	}
+	if product.Category != p.Category {
+		hasUpdatedData = true
+		p.Category = product.Category
+	}
+	if product.Notes != p.Notes {
+		hasUpdatedData = true
+		p.Notes = product.Notes
+	}
+	if product.ImageURL != p.ImageURL {
+		hasUpdatedData = true
+		p.ImageURL = product.ImageURL
+	}
+	if product.Location != p.Location {
+		hasUpdatedData = true
+		p.Location = product.Location
+	}
+	if product.IsAvailable != p.IsAvailable {
+		hasUpdatedData = true
+		p.IsAvailable = product.IsAvailable
+	}
+	if product.Stock != p.Stock {
+		hasUpdatedData = true
+		p.Stock = product.Stock
+	}
+	if product.Price != p.Price {
+		hasUpdatedData = true
+		p.Price = product.Price
+	}
+
+	if !hasUpdatedData {
+		return fmt.Errorf("no data updated")
+	}
+
+	return nil
 }

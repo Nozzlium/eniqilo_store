@@ -13,6 +13,10 @@ type AuthHandler struct {
 	UserService *service.UserService
 }
 
+func NewAuthHandler(userService *service.UserService) *AuthHandler {
+	return &AuthHandler{UserService: userService}
+}
+
 func InitAuthHandler(
 	app *fiber.App,
 	userService *service.UserService,
