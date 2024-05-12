@@ -20,7 +20,7 @@ func BuildQueryStringAndParams(
 	if len(orderBy) > 0 {
 		baseQuery.WriteString(" order by ")
 		for i, clause := range orderBy {
-			if i > 1 {
+			if i > 0 {
 				baseQuery.WriteString(", ")
 			}
 			fmt.Fprint(baseQuery, clause)
