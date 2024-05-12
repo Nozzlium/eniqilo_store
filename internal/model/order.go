@@ -7,15 +7,15 @@ import (
 )
 
 type Order struct {
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     time.Time
+	ProductOrders []ProductOrder
 	ID            uuid.UUID
 	CustomerID    uuid.UUID
 	TotalPrice    float64
 	PaymentAmount float64
 	Change        float64
-	ProductOrders []ProductOrder
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	DeletedAt     time.Time
 }
 
 func (order Order) ToResponseBody() OrderResponseBody {
@@ -56,9 +56,9 @@ type ProductOrder struct {
 
 type OrderRequestBody struct {
 	CustomerID     string              `json:"customerId"`
+	ProductDetails []ProductDetailBody `json:"productDetails"`
 	Paid           float64             `json:"paid"`
 	Change         float64             `json:"change"`
-	ProductDetails []ProductDetailBody `json:"productDetails"`
 }
 
 func (body OrderRequestBody) IsValid() bool {
@@ -75,10 +75,10 @@ func (body ProductDetailBody) IsValid() bool {
 }
 
 type OrderResponseBody struct {
+	CreatedAt      string              `json:"createdAt"`
 	TransactionId  string              `json:"transactionId"`
 	CustomerID     string              `json:"customerId"`
+	ProductDetails []ProductDetailBody `json:"productDetails"`
 	Paid           float64             `json:"paid"`
 	Change         float64             `json:"change"`
-	CreatedAt      string              `json:"createdAt"`
-	ProductDetails []ProductDetailBody `json:"productDetails"`
 }

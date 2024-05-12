@@ -6,9 +6,9 @@ import (
 )
 
 type Customer struct {
-	ID          uuid.UUID
-	PhoneNumber string
 	Name        string
+	PhoneNumber string
+	ID          uuid.UUID
 }
 
 type CustomerData struct {

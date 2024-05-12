@@ -171,11 +171,17 @@ func (spq SearchProductQuery) BuildOrderByClause() ([]string, []interface{}) {
 			params,
 			OrderBy(spq.CreatedAt),
 		)
-		sqlClause = append(
-			sqlClause,
-			"created_at $%d",
+	} else {
+		params = append(
+			params,
+			Desc,
 		)
 	}
+
+	sqlClause = append(
+		sqlClause,
+		"created_at $%d",
+	)
 
 	if spq.Price != "" ||
 		OrderBy(spq.Price).IsValid() {
