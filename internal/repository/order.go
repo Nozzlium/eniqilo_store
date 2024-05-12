@@ -181,13 +181,12 @@ func (r *OrderRepository) Search(
 				orders,
 				o.ID,
 			)
-			o.ProductOrders = make(
+			om.ProductOrders = make(
 				[]model.ProductOrder,
 				0,
 			)
-		} else {
-			o = om
 		}
+		o = om
 
 		o.ProductOrders = append(
 			o.ProductOrders,
