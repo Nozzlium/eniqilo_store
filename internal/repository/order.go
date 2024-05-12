@@ -123,7 +123,7 @@ func (r *OrderRepository) Search(
       o.change,
       o.created_at,
       op.product_id,
-      op.quantity,
+      op.quantity
     from orders o
     join order_product op on o.id = op.order_id
     where 1=1`)

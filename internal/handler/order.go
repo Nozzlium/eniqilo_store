@@ -130,3 +130,42 @@ func (handlers *OrderHandler) Create(
 		"data":    res.ToResponseBody(),
 	})
 }
+
+func (h *OrderHandler) Search(
+	ctx *fiber.Ctx,
+) error {
+	var queries model.SearchOrderQuery
+	err := ctx.QueryParser(&queries)
+	if err != nil {
+		return HandleError(
+			ctx,
+			ErrorResponse{
+				error:   err,
+				message: err.Error(),
+			},
+		)
+	}
+
+	orders, err := h.OrderService.Search(
+		ctx.Context(),
+		queries,
+	)
+	if err != nil {
+		return HandleError(
+			ctx,
+			ErrorResponse{
+				error:   err,
+				message: err.Error(),
+				detail: fmt.Sprintf(
+					"failed to search orders, %v",
+					err,
+				),
+			},
+		)
+	}
+
+	return ctx.JSON(fiber.Map{
+		"message": "success",
+		"data":    orders,
+	})
+}

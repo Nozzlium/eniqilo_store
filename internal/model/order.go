@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nozzlium/eniqilo_store/internal/util"
 )
 
 type Order struct {
@@ -38,11 +39,13 @@ func (order Order) ToResponseBody() OrderResponseBody {
 	}
 
 	return OrderResponseBody{
-		TransactionId:  order.ID.String(),
-		CustomerID:     order.CustomerID.String(),
-		Paid:           order.PaymentAmount,
-		Change:         order.Change,
-		CreatedAt:      order.CreatedAt.String(),
+		TransactionId: order.ID.String(),
+		CustomerID:    order.CustomerID.String(),
+		Paid:          order.PaymentAmount,
+		Change:        order.Change,
+		CreatedAt: util.ToISO8601(
+			order.CreatedAt,
+		),
 		ProductDetails: productDetails,
 	}
 }
@@ -63,7 +66,8 @@ type OrderRequestBody struct {
 }
 
 func (body OrderRequestBody) IsValid() bool {
-	return body.Paid > 0 && body.Change >= 0
+	return body.Paid > 0 &&
+		body.Change >= 0
 }
 
 type ProductDetailBody struct {
@@ -98,7 +102,10 @@ func (soq SearchOrderQuery) BuildWhereClauseAndParams() ([]string, []interface{}
 	)
 
 	if soq.CustomerID != "" {
-		params = append(params, soq.CustomerID)
+		params = append(
+			params,
+			soq.CustomerID,
+		)
 		sqlClause = append(
 			sqlClause,
 			"o.customer_id = $%d",
@@ -125,7 +132,7 @@ func (soq SearchOrderQuery) BuildPagination() (string, []interface{}) {
 		offset,
 	)
 
-	return "limit $%d offset $%d", params
+	return " limit $%d offset $%d ", params
 }
 
 func (soq SearchOrderQuery) BuildOrderByClause() []string {
@@ -137,7 +144,10 @@ func (soq SearchOrderQuery) BuildOrderByClause() []string {
 		).IsValid() {
 		sqlClause = append(
 			sqlClause,
-			fmt.Sprintf("o.created_at %s", soq.CreatedAt),
+			fmt.Sprintf(
+				"o.created_at %s",
+				soq.CreatedAt,
+			),
 		)
 	} else {
 		sqlClause = append(

@@ -122,6 +122,25 @@ func (service *OrderService) Create(
 func (service *OrderService) Search(
 	ctx context.Context,
 	query model.SearchOrderQuery,
-) ([]model.Order, error) {
-	return nil, nil
+) ([]model.OrderResponseBody, error) {
+	orderMap, uuids, err := service.orderRepository.Search(
+		ctx,
+		query,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	resOrders := make(
+		[]model.OrderResponseBody,
+		0,
+		len(uuids),
+	)
+	for _, id := range uuids {
+		resOrders = append(
+			resOrders,
+			orderMap[id].ToResponseBody(),
+		)
+	}
+	return resOrders, nil
 }

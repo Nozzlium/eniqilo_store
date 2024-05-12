@@ -136,6 +136,10 @@ func setupApp(app *fiber.App) error {
 		"/checkout",
 		orderHandler.Create,
 	)
+	protectedProduct.Get(
+		"/checkout/history",
+		orderHandler.Search,
+	)
 
 	customer := v1.Group(
 		"/customer",
