@@ -18,7 +18,7 @@ func main() {
 	fiberApp := fiber.New(fiber.Config{
 		JSONEncoder: sonic.Marshal,
 		JSONDecoder: sonic.Unmarshal,
-		// Prefork:     true,
+		Prefork:     true,
 	})
 
 	err := setupApp(fiberApp)
@@ -26,7 +26,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = fiberApp.Listen(":3000")
+	err = fiberApp.Listen(":8080")
 	if err != nil {
 		log.Fatal(err)
 	}
