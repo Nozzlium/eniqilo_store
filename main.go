@@ -122,8 +122,8 @@ func setupApp(app *fiber.App) error {
 		productHandler.Delete,
 	)
 
-	customer := app.Group(
-		"/v1/customer",
+	customer := v1.Group(
+		"/customer",
 	)
 	customer.Use(middleware.Protected())
 	customer.Post(
