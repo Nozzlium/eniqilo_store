@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/nozzlium/eniqilo_store/internal/constant"
@@ -123,9 +124,21 @@ func (service *OrderService) Search(
 	ctx context.Context,
 	query model.SearchOrderQuery,
 ) ([]model.OrderResponseBody, error) {
-	orderMap, uuids, err := service.orderRepository.Search(
+	ids, err := service.orderRepository.GetOrderIDs(
 		ctx,
 		query,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("ids: %v", ids)
+	orderMap, uuids, err := service.orderRepository.Search(
+		ctx,
+		model.SearchOrderDetailQuery{
+			IDs:       ids,
+			CreatedAt: query.CreatedAt,
+		},
 	)
 	if err != nil {
 		return nil, err

@@ -39,14 +39,14 @@ func (order Order) ToResponseBody() OrderResponseBody {
 	}
 
 	return OrderResponseBody{
-		TransactionId: order.ID.String(),
-		CustomerID:    order.CustomerID.String(),
-		Paid:          order.PaymentAmount,
-		Change:        order.Change,
+		TransactionId:  order.ID.String(),
+		CustomerID:     order.CustomerID.String(),
+		Paid:           order.PaymentAmount,
+		Change:         order.Change,
+		ProductDetails: productDetails,
 		CreatedAt: util.ToISO8601(
 			order.CreatedAt,
 		),
-		ProductDetails: productDetails,
 	}
 }
 
@@ -89,50 +89,21 @@ type OrderResponseBody struct {
 }
 
 type SearchOrderQuery struct {
-	CustomerID string `query:"customerId"`
-	CreatedAt  string `query:"createdAt"`
-	Limit      int    `query:"limit"`
-	Offset     int    `query:"offset"`
+	CreatedAt  string    `query:"createdAt"`
+	Limit      int       `query:"limit"`
+	Offset     int       `query:"offset"`
+	CustomerID uuid.UUID `query:"customerId"`
 }
 
 func (soq SearchOrderQuery) BuildWhereClauseAndParams() ([]string, []interface{}) {
-	var (
-		sqlClause []string
-		params    []interface{}
-	)
-
-	if soq.CustomerID != "" {
-		params = append(
-			params,
-			soq.CustomerID,
-		)
-		sqlClause = append(
-			sqlClause,
-			"o.customer_id = $%d",
-		)
+	if soq.CustomerID == uuid.Nil {
+		return []string{}, []interface{}{}
 	}
-
-	return sqlClause, params
+	return []string{"o.customer_id = $%d"}, []interface{}{soq.CustomerID}
 }
 
 func (soq SearchOrderQuery) BuildPagination() (string, []interface{}) {
-	var params []interface{}
-
-	limit := 5
-	offset := 0
-	if soq.Limit > 0 {
-		limit = soq.Limit
-	}
-	if soq.Offset > 0 {
-		offset = soq.Offset
-	}
-	params = append(
-		params,
-		limit,
-		offset,
-	)
-
-	return " limit $%d offset $%d ", params
+	return util.DefaultPaginationBuilder(soq.Limit, soq.Offset)
 }
 
 func (soq SearchOrderQuery) BuildOrderByClause() []string {
@@ -147,6 +118,39 @@ func (soq SearchOrderQuery) BuildOrderByClause() []string {
 			fmt.Sprintf(
 				"o.created_at %s",
 				soq.CreatedAt,
+			),
+		)
+	} else {
+		sqlClause = append(
+			sqlClause,
+			"o.created_at desc",
+		)
+	}
+
+	return sqlClause
+}
+
+type SearchOrderDetailQuery struct {
+	CreatedAt string      `query:"createdAt"`
+	IDs       []uuid.UUID `query:"customerId"`
+}
+
+func (sodq SearchOrderDetailQuery) BuildWhereClauseAndParams() ([]string, []interface{}) {
+	return []string{"o.id = any($%d)"}, []interface{}{sodq.IDs}
+}
+
+func (sodq SearchOrderDetailQuery) BuildOrderByClause() []string {
+	var sqlClause []string
+
+	if sodq.CreatedAt != "" ||
+		OrderBy(
+			sodq.CreatedAt,
+		).IsValid() {
+		sqlClause = append(
+			sqlClause,
+			fmt.Sprintf(
+				"o.created_at %s",
+				sodq.CreatedAt,
 			),
 		)
 	} else {

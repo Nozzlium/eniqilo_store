@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -110,9 +111,57 @@ func (r *OrderRepository) Save(
 	return order, nil
 }
 
-func (r *OrderRepository) Search(
+func (r *OrderRepository) GetOrderIDs(
 	ctx context.Context,
 	searchQuery model.SearchOrderQuery,
+) ([]uuid.UUID, error) {
+	var query bytes.Buffer
+	query.WriteString(`
+    select o.id
+    from orders o
+    where 1=1`)
+
+	queryString, params := util.BuildQueryStringAndParams(
+		&query,
+		searchQuery.BuildWhereClauseAndParams,
+		searchQuery.BuildPagination,
+		searchQuery.BuildOrderByClause,
+	)
+
+	var ids []uuid.UUID
+	rows, err := r.db.Query(
+		ctx,
+		queryString,
+		params...)
+	if err != nil {
+		if errors.Is(
+			err,
+			pgx.ErrNoRows,
+		) {
+			return ids, nil
+		}
+		return ids, err
+	}
+
+	for rows.Next() {
+		var id uuid.UUID
+		err := rows.Scan(&id)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ids, nil
+			}
+			return ids, err
+		}
+
+		ids = append(ids, id)
+	}
+
+	return ids, nil
+}
+
+func (r *OrderRepository) Search(
+	ctx context.Context,
+	searchQuery model.SearchOrderDetailQuery,
 ) (map[uuid.UUID]model.Order, []uuid.UUID, error) {
 	var query bytes.Buffer
 	query.WriteString(`
@@ -128,13 +177,14 @@ func (r *OrderRepository) Search(
     join order_product op on o.id = op.order_id
     where 1=1`)
 
-	queryString, params := util.BuildQueryStringAndParams(
+	queryString, params := util.BuildQueryStringAndParamsWithoutLimit(
 		&query,
 		searchQuery.BuildWhereClauseAndParams,
-		searchQuery.BuildPagination,
 		searchQuery.BuildOrderByClause,
 	)
 
+	log.Printf("query: %s \n", queryString)
+	log.Printf("params: %v \n", params)
 	var (
 		orders   []uuid.UUID
 		orderMap = make(
@@ -155,6 +205,7 @@ func (r *OrderRepository) Search(
 		return orderMap, orders, err
 	}
 
+	defer rows.Close()
 	for rows.Next() {
 		var (
 			o         model.Order
@@ -181,14 +232,14 @@ func (r *OrderRepository) Search(
 				orders,
 				o.ID,
 			)
+			om = o
 			om.ProductOrders = make(
 				[]model.ProductOrder,
 				0,
 			)
 		}
-		o = om
 
-		o.ProductOrders = append(
+		om.ProductOrders = append(
 			o.ProductOrders,
 			model.ProductOrder{
 				OrderID:   o.ID,
@@ -197,8 +248,9 @@ func (r *OrderRepository) Search(
 			},
 		)
 
-		orderMap[o.ID] = o
+		orderMap[o.ID] = om
 	}
 
+	log.Printf("orderMap: %v \n", orderMap)
 	return orderMap, orders, nil
 }
