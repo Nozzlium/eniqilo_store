@@ -9,8 +9,18 @@ import (
 )
 
 type OrderService struct {
-	OrderRepository   repository.OrderRepository
-	ProductRepository repository.ProductRepository
+	OrderRepository   *repository.OrderRepository
+	ProductRepository *repository.ProductRepository
+}
+
+func NewOrderService(
+	orderRepository *repository.OrderRepository,
+	productRepository *repository.ProductRepository,
+) *OrderService {
+	return &OrderService{
+		OrderRepository:   orderRepository,
+		ProductRepository: productRepository,
+	}
 }
 
 func (service *OrderService) Create(

@@ -58,6 +58,7 @@ func setupApp(app *fiber.App) error {
 	customerRepository := repository.NewCustomerRepository(
 		db,
 	)
+	orderRepository := repository.NewOrderRepository(db)
 
 	// initiate services
 	userService := service.NewUserService(
@@ -70,6 +71,7 @@ func setupApp(app *fiber.App) error {
 		productRepository,
 	)
 	customerService := service.NewCustomerService(customerRepository)
+	orderService := service.NewOrderService(orderRepository, productRepository)
 
 	// initiate handlers
 	authHandler := handler.NewAuthHandler(
@@ -81,24 +83,20 @@ func setupApp(app *fiber.App) error {
 	customerHandler := handler.NewCustomerHandler(
 		customerService,
 	)
+	orderHandler := handler.NewOrderHandler(orderService)
 
 	v1 := app.Group("/v1")
 	auth := v1.Group("/staff")
-	auth.Post(
-		"/register",
-		authHandler.RegisterHandler,
-	)
+	auth.Post("/register", authHandler.RegisterHandler)
 
-	auth.Post(
-		"/login",
-		authHandler.Login,
-	)
+	auth.Post("/login", authHandler.Login)
 
 	product := v1.Group("/product")
 	product.Get(
 		"/customer",
 		productHandler.SearchForCustomer,
 	)
+	product.Post("/checkout", orderHandler.Create)
 
 	// protected routes (require authentication)
 	protectedProduct := product.Use(middleware.Protected()).
@@ -122,8 +120,7 @@ func setupApp(app *fiber.App) error {
 
 	customer := v1.Group(
 		"/customer",
-	)
-	customer.Use(middleware.Protected())
+	).Use(middleware.Protected())
 	customer.Post(
 		"/register",
 		customerHandler.Register,

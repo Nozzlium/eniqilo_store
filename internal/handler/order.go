@@ -11,11 +11,17 @@ import (
 	"github.com/nozzlium/eniqilo_store/internal/service"
 )
 
-type OrderHandlers struct {
-	OrderService service.OrderService
+type OrderHandler struct {
+	OrderService *service.OrderService
 }
 
-func (handlers *OrderHandlers) Create(
+func NewOrderHandler(
+	orderService *service.OrderService,
+) *OrderHandler {
+	return &OrderHandler{OrderService: orderService}
+}
+
+func (handlers *OrderHandler) Create(
 	c *fiber.Ctx,
 ) error {
 	var body model.OrderRequestBody
