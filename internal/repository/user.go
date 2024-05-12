@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/nozzlium/eniqilo_store/internal/constant"
 	"github.com/nozzlium/eniqilo_store/internal/model"
 )
 
@@ -38,7 +39,7 @@ func (repository *UserRepository) Save(
       $2,
       $3,
       $4 
-    ) ;
+    );
   `
 
 	_, err := repository.db.Exec(
@@ -79,7 +80,7 @@ func (repository *UserRepository) FindByPhoneNumber(
 			err,
 			pgx.ErrNoRows,
 		) {
-			return user, model.ErrNotFound
+			return user, constant.ErrNotFound
 		}
 		return model.User{}, err
 	}
@@ -111,7 +112,7 @@ func (repository *UserRepository) FindByPhoneNumberAndID(
 			err,
 			pgx.ErrNoRows,
 		) {
-			return user, model.ErrNotFound
+			return user, constant.ErrNotFound
 		}
 		return model.User{}, err
 	}

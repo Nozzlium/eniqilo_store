@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/nozzlium/eniqilo_store/internal/constant"
 	"github.com/nozzlium/eniqilo_store/internal/model"
 	"github.com/nozzlium/eniqilo_store/internal/repository"
 	"golang.org/x/crypto/bcrypt"
@@ -53,17 +54,16 @@ func (service *UserService) Register(
 		ctx,
 		user.PhoneNumber,
 	)
-	if err != nil {
-		if !errors.Is(
+	if err != nil &&
+		!errors.Is(
+			constant.ErrNotFound,
 			err,
-			model.ErrNotFound,
 		) {
-			return model.RegisterRespose{}, err
-		}
+		return model.RegisterRespose{}, err
 	}
 
 	if userResult.PhoneNumber == user.PhoneNumber {
-		return model.RegisterRespose{}, model.ErrConflict
+		return model.RegisterRespose{}, constant.ErrConflict
 	}
 
 	user.ID = generatedUUID
@@ -138,7 +138,7 @@ func (service *UserService) ValidateUserData(
 	if err != nil {
 		if errors.Is(
 			err,
-			model.ErrNotFound,
+			constant.ErrNotFound,
 		) {
 			return false, nil
 		}

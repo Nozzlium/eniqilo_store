@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/nozzlium/eniqilo_store/internal/middleware"
@@ -11,6 +12,14 @@ import (
 
 type CustomerHandler struct {
 	CustomerService *service.CustomerService
+}
+
+func NewCustomerHandler(
+	customerService *service.CustomerService,
+) *CustomerHandler {
+	return &CustomerHandler{
+		CustomerService: customerService,
+	}
 }
 
 func InitCustomerHandler(
@@ -53,9 +62,7 @@ func (handler *CustomerHandler) Register(
 			})
 	}
 
-	if !body.IsValid(
-		handler.CustomerService.PhoneNumberRegex,
-	) {
+	if !body.IsValid() {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{
 				"message": "request does not pass validation",
@@ -70,16 +77,17 @@ func (handler *CustomerHandler) Register(
 		},
 	)
 	if err != nil {
-		if errors.Is(
-			err,
-			model.ErrConflict,
-		) {
-			return c.Status(fiber.StatusConflict).
-				JSON(fiber.Map{
-					"message": "phone number already exists",
-				})
-		}
-		return err
+		return HandleError(
+			c,
+			ErrorResponse{
+				message: "error creating customer",
+				error:   err,
+				detail: fmt.Sprintf(
+					"error creating customer: %v",
+					err.Error(),
+				),
+			},
+		)
 	}
 
 	return c.JSON(fiber.Map{

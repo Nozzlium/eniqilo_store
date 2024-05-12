@@ -1,9 +1,8 @@
 package model
 
 import (
-	"regexp"
-
 	"github.com/google/uuid"
+	"github.com/nozzlium/eniqilo_store/internal/util"
 )
 
 type Customer struct {
@@ -17,9 +16,7 @@ type CustomerRegisterBody struct {
 	Name        string `json:"name"`
 }
 
-func (body CustomerRegisterBody) IsValid(
-	phoneNumberRegex *regexp.Regexp,
-) bool {
+func (body CustomerRegisterBody) IsValid() bool {
 	if nameLen := len(body.Name); nameLen < 5 ||
 		nameLen > 50 {
 		return false
@@ -30,7 +27,7 @@ func (body CustomerRegisterBody) IsValid(
 		return false
 	}
 
-	if !phoneNumberRegex.MatchString(
+	if !util.ValidatePhoneNumber(
 		body.PhoneNumber,
 	) {
 		return false
