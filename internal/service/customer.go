@@ -25,7 +25,7 @@ func NewCustomerService(
 func (service *CustomerService) Create(
 	ctx context.Context,
 	customer model.Customer,
-) (model.Customer, error) {
+) (model.CustomerData, error) {
 	savedCustomer, err := service.CustomerRepository.FindByPhoneNumber(
 		ctx,
 		customer.PhoneNumber,
@@ -35,17 +35,17 @@ func (service *CustomerService) Create(
 			err,
 			constant.ErrNotFound,
 		) {
-			return customer, err
+			return model.CustomerData{}, err
 		}
 	}
 
 	if savedCustomer.PhoneNumber == customer.PhoneNumber {
-		return customer, constant.ErrConflict
+		return model.CustomerData{}, constant.ErrConflict
 	}
 
 	newID, err := uuid.NewV7()
 	if err != nil {
-		return model.Customer{}, err
+		return model.CustomerData{}, err
 	}
 
 	customer.ID = newID
@@ -54,10 +54,14 @@ func (service *CustomerService) Create(
 		customer,
 	)
 	if err != nil {
-		return model.Customer{}, err
+		return model.CustomerData{}, err
 	}
 
-	return saved, nil
+	return model.CustomerData{
+		UserID:      saved.ID.String(),
+		Name:        saved.Name,
+		PhoneNumber: saved.PhoneNumber,
+	}, nil
 }
 
 func (service *CustomerService) FindCustomers(
@@ -78,11 +82,14 @@ func (service *CustomerService) FindCustomers(
 		len(customers),
 	)
 	for _, customer := range customers {
-		res = append(res, model.CustomerData{
-			UserID:      customer.ID.String(),
-			PhoneNumber: customer.PhoneNumber,
-			Name:        customer.Name,
-		})
+		res = append(
+			res,
+			model.CustomerData{
+				UserID:      customer.ID.String(),
+				PhoneNumber: customer.PhoneNumber,
+				Name:        customer.Name,
+			},
+		)
 	}
 	return res, nil
 }
