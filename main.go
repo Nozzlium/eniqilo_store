@@ -55,7 +55,7 @@ func setupApp(app *fiber.App) error {
 	productRepository := repository.NewProductRepository(
 		db,
 	)
-	customerRepository, _ := repository.NewCustomerRepository(
+	customerRepository := repository.NewCustomerRepository(
 		db,
 	)
 
@@ -69,9 +69,7 @@ func setupApp(app *fiber.App) error {
 	productService := service.NewProductService(
 		productRepository,
 	)
-	customerService, _ := service.NewCustomerService(
-		customerRepository,
-	)
+	customerService := service.NewCustomerService(customerRepository)
 
 	// initiate handlers
 	authHandler := handler.NewAuthHandler(

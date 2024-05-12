@@ -11,6 +11,12 @@ type Customer struct {
 	Name        string
 }
 
+type CustomerData struct {
+	UserID      string `json:"userId"`
+	PhoneNumber string `json:"phoneNumber"`
+	Name        string `json:"name"`
+}
+
 type CustomerRegisterBody struct {
 	PhoneNumber string `json:"phoneNumber"`
 	Name        string `json:"name"`

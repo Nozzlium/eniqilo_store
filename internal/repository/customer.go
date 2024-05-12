@@ -17,16 +17,10 @@ type CustomerRepository struct {
 
 func NewCustomerRepository(
 	db *pgx.Conn,
-) (*CustomerRepository, error) {
-	if db == nil {
-		return &CustomerRepository{}, errors.New(
-			"cannot init, db is nil",
-		)
-	}
-
+) *CustomerRepository {
 	return &CustomerRepository{
 		db: db,
-	}, nil
+	}
 }
 
 func (repo *CustomerRepository) Save(

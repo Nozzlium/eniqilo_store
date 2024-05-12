@@ -14,24 +14,12 @@ type CustomerService struct {
 	CustomerRepository *repository.CustomerRepository
 }
 
-type CustomerData struct {
-	UserID      string `json:"userId"`
-	PhoneNumber string `json:"phoneNumber"`
-	Name        string `json:"name"`
-}
-
 func NewCustomerService(
 	customerRepository *repository.CustomerRepository,
-) (*CustomerService, error) {
-	if customerRepository == nil {
-		return nil, errors.New(
-			"cannot init, customer repository is nil",
-		)
-	}
-
+) *CustomerService {
 	return &CustomerService{
 		CustomerRepository: customerRepository,
-	}, nil
+	}
 }
 
 func (service *CustomerService) Create(
@@ -75,7 +63,7 @@ func (service *CustomerService) Create(
 func (service *CustomerService) FindCustomers(
 	ctx context.Context,
 	customer model.Customer,
-) ([]CustomerData, error) {
+) ([]model.CustomerData, error) {
 	customers, err := service.CustomerRepository.FindAllCustomers(
 		ctx,
 		customer,
@@ -85,12 +73,12 @@ func (service *CustomerService) FindCustomers(
 	}
 
 	res := make(
-		[]CustomerData,
+		[]model.CustomerData,
 		0,
 		len(customers),
 	)
 	for _, customer := range customers {
-		res = append(res, CustomerData{
+		res = append(res, model.CustomerData{
 			UserID:      customer.ID.String(),
 			PhoneNumber: customer.PhoneNumber,
 			Name:        customer.Name,
