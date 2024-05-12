@@ -71,7 +71,7 @@ func setupApp(app *fiber.App) error {
 		productRepository,
 	)
 	customerService := service.NewCustomerService(customerRepository)
-	orderService := service.NewOrderService(orderRepository, productRepository)
+	orderService := service.NewOrderService(orderRepository, productRepository, customerRepository)
 
 	// initiate handlers
 	authHandler := handler.NewAuthHandler(

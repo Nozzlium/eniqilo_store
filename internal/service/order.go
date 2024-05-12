@@ -9,17 +9,20 @@ import (
 )
 
 type OrderService struct {
-	OrderRepository   *repository.OrderRepository
-	ProductRepository *repository.ProductRepository
+	orderRepository    *repository.OrderRepository
+	productRepository  *repository.ProductRepository
+	customerRepository *repository.CustomerRepository
 }
 
 func NewOrderService(
 	orderRepository *repository.OrderRepository,
 	productRepository *repository.ProductRepository,
+	customerRepository *repository.CustomerRepository,
 ) *OrderService {
 	return &OrderService{
-		OrderRepository:   orderRepository,
-		ProductRepository: productRepository,
+		orderRepository:    orderRepository,
+		productRepository:  productRepository,
+		customerRepository: customerRepository,
 	}
 }
 
@@ -27,7 +30,10 @@ func (service *OrderService) Create(
 	ctx context.Context,
 	order model.Order,
 ) (model.Order, error) {
-	// TODO: Still needs to check on user validity, code not merged
+	_, err := service.customerRepository.FindByID(ctx, order.CustomerID)
+	if err != nil {
+		return model.Order{}, err
+	}
 
 	stringIds := make(
 		[]string,
@@ -40,7 +46,7 @@ func (service *OrderService) Create(
 			orderProduct.ProductID.String(),
 		)
 	}
-	products, err := service.ProductRepository.FindByIds(
+	products, err := service.productRepository.FindByIds(
 		ctx,
 		stringIds,
 	)
@@ -91,7 +97,7 @@ func (service *OrderService) Create(
 		return model.Order{}, constant.ErrInvalidChange
 	}
 
-	result, err := service.OrderRepository.Save(
+	result, err := service.orderRepository.Save(
 		ctx,
 		order,
 		updatedProducts,
