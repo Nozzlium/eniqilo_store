@@ -57,9 +57,9 @@ CREATE TABLE IF NOT EXISTS "products" (
   updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   deleted_at timestamp NULL DEFAULT NULL,
   created_by uuid NOT NULL,
+  -- UNIQUE ("sku"),
   PRIMARY KEY ("id"),
-  FOREIGN KEY ("created_by") REFERENCES "users" ("id") ON DELETE CASCADE,
-  UNIQUE ("sku")
+  FOREIGN KEY ("created_by") REFERENCES "users" ("id") ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "customers" (

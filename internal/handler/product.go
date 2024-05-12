@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/nozzlium/eniqilo_store/internal/constant"
 	"github.com/nozzlium/eniqilo_store/internal/model"
 	"github.com/nozzlium/eniqilo_store/internal/service"
 )
@@ -49,7 +50,7 @@ func (h *ProductHandler) SearchForCustomer(ctx *fiber.Ctx) error {
 	err := ctx.QueryParser(&query)
 	if err != nil {
 		log.Println(err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": fmt.Sprintf("unable to parse query: %v", err.Error()),
 		})
 	}
@@ -81,7 +82,7 @@ func (h *ProductHandler) Create(ctx *fiber.Ctx) error {
 	var product model.Product
 	err := ctx.BodyParser(&product)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": fmt.Sprintf("unable to process body: %v", err.Error()),
 		})
 	}
@@ -89,14 +90,17 @@ func (h *ProductHandler) Create(ctx *fiber.Ctx) error {
 	if !product.IsValid() {
 		return HandleError(ctx, ErrorResponse{
 			message: "invalid body",
-			error:   fmt.Errorf("invalid body"),
+			error:   constant.ErrBadInput,
+			detail:  "invalid body",
 		})
 	}
 
 	id, createdAt, err := h.productService.Save(ctx.Context(), product)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": fmt.Sprintf("unable to save product: %v", err.Error()),
+		return HandleError(ctx, ErrorResponse{
+			message: "unable to save product",
+			error:   err,
+			detail:  fmt.Sprintf("unable to save product: %v", err.Error()),
 		})
 	}
 
@@ -114,7 +118,7 @@ func (h *ProductHandler) Update(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	err := ctx.BodyParser(&product)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": fmt.Sprintf("unable to process body: %v", err.Error()),
 		})
 	}
@@ -127,8 +131,10 @@ func (h *ProductHandler) Update(ctx *fiber.Ctx) error {
 
 	err = h.productService.Update(ctx.Context(), id, product)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": fmt.Sprintf("unable to save product: %v", err.Error()),
+		return HandleError(ctx, ErrorResponse{
+			message: "unable to update product",
+			error:   err,
+			detail:  fmt.Sprintf("unable to update product: %v", err.Error()),
 		})
 	}
 

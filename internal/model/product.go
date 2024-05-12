@@ -160,6 +160,14 @@ func (spq SearchProductQuery) BuildPagination() (string, []interface{}) {
 func (spq SearchProductQuery) BuildOrderByClause() []string {
 	var sqlClause []string
 
+	if spq.Price != "" ||
+		OrderBy(spq.Price).IsValid() {
+		sqlClause = append(
+			sqlClause,
+			fmt.Sprintf("price %s", spq.Price),
+		)
+	}
+
 	if spq.CreatedAt != "" ||
 		OrderBy(
 			spq.CreatedAt,
@@ -172,14 +180,6 @@ func (spq SearchProductQuery) BuildOrderByClause() []string {
 		sqlClause = append(
 			sqlClause,
 			"created_at desc",
-		)
-	}
-
-	if spq.Price != "" ||
-		OrderBy(spq.Price).IsValid() {
-		sqlClause = append(
-			sqlClause,
-			fmt.Sprintf("price %s", spq.Price),
 		)
 	}
 

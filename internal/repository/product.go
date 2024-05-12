@@ -297,6 +297,9 @@ func (r *ProductRepository) FindByID(
 		&p.IsAvailable,
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return p, constant.ErrNotFound
+		}
 		return p, err
 	}
 
@@ -328,6 +331,9 @@ func (r *ProductRepository) FindByIds(
 		ids,
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, constant.ErrNotFound
+		}
 		return nil, err
 	}
 	defer rows.Close()
@@ -345,6 +351,9 @@ func (r *ProductRepository) FindByIds(
 			&temp.IsAvailable,
 		)
 		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return nil, constant.ErrNotFound
+			}
 			return nil, err
 		}
 

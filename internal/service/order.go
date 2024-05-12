@@ -65,6 +65,11 @@ func (service *OrderService) Create(
 		len(order.ProductOrders),
 	)
 
+	order.ID, err = uuid.NewV7()
+	if err != nil {
+		return model.Order{}, err
+	}
+
 	for i, orderProduct := range order.ProductOrders {
 		tempProd, ok := products[orderProduct.ProductID]
 		if !ok {
@@ -86,6 +91,7 @@ func (service *OrderService) Create(
 			tempProd,
 		)
 
+		orderProduct.OrderID = order.ID
 		orderProduct.Price = tempProd.Price
 		orderProduct.TotalPrice = itemTotal
 		order.ProductOrders[i] = orderProduct

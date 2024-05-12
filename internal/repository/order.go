@@ -26,6 +26,12 @@ func (r *OrderRepository) Save(
 	order model.Order,
 	products []model.Product,
 ) (model.Order, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return model.Order{}, err
+	}
+	defer tx.Rollback(ctx)
+
 	batch := &pgx.Batch{}
 
 	// create order entity
@@ -77,7 +83,7 @@ func (r *OrderRepository) Save(
 	// update product stock
 	queryUpdateStock := `
     update products 
-    set quantity = $1 
+    set stock = $1 
     where id = $2;
   `
 	for _, product := range products {
@@ -88,11 +94,16 @@ func (r *OrderRepository) Save(
 		)
 	}
 
-	batchRes := r.db.SendBatch(
+	batchRes := tx.SendBatch(
 		ctx,
 		batch,
 	)
 	if err := batchRes.Close(); err != nil {
+		return model.Order{}, err
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
 		return model.Order{}, err
 	}
 

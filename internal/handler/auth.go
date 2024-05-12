@@ -24,7 +24,7 @@ func (handlers *AuthHandler) RegisterHandler(
 	var body model.RegisterBody
 	err := ctx.BodyParser(&body)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).
+		return ctx.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{
 				"message": err.Error(),
 			})
@@ -75,7 +75,7 @@ func (handlers *AuthHandler) Login(
 	err := ctx.BodyParser(&body)
 	if err != nil {
 		log.Println(err)
-		return ctx.Status(fiber.StatusInternalServerError).
+		return ctx.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{
 				"message": "unable to process body",
 			})

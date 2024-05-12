@@ -51,14 +51,16 @@ func (s ProductService) Save(ctx context.Context, product model.Product) (string
 		return "", "", err
 	}
 
-	existingProduct, err := s.repository.FindBySKU(ctx, product.SKU)
-	if err != nil && !errors.Is(err, constant.ErrNotFound) {
-		return "", "", fmt.Errorf("failed to find product: %v", err)
-	}
-
-	if existingProduct.SKU == product.SKU {
-		return "", "", constant.ErrProductExists
-	}
+	// Check if product already exists from its SKU
+	// ignored for now
+	// existingProduct, err := s.repository.FindBySKU(ctx, product.SKU)
+	// if err != nil && !errors.Is(err, constant.ErrNotFound) {
+	// 	return "", "", fmt.Errorf("failed to find product: %v", err)
+	// }
+	//
+	// if existingProduct.SKU == product.SKU {
+	// 	return "", "", constant.ErrProductExists
+	// }
 
 	product.ID = id
 	product.CreatedAt = now
@@ -77,11 +79,14 @@ func (s ProductService) Update(ctx context.Context, id string, product model.Pro
 
 	uuidID, err := uuid.Parse(id)
 	if err != nil {
-		return constant.ErrBadInput
+		return constant.ErrNotFound
 	}
 
 	existingProduct, err := s.repository.FindByID(ctx, uuidID)
 	if err != nil {
+		if errors.Is(err, constant.ErrNotFound) {
+			return err
+		}
 		return fmt.Errorf("failed to find product: %v", err)
 	}
 
@@ -105,7 +110,7 @@ func (s ProductService) Delete(ctx context.Context, id string) error {
 
 	uuidID, err := uuid.Parse(id)
 	if err != nil {
-		return constant.ErrBadInput
+		return constant.ErrNotFound
 	}
 
 	deletedAt := now
