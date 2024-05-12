@@ -26,3 +26,6 @@ post-cmd.txt
 post_cmd.txt
 pre-cmd.txt
 pre_cmd.txt
+
+# ignore binary build
+./murkoto/
