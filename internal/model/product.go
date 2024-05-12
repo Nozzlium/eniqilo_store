@@ -157,45 +157,33 @@ func (spq SearchProductQuery) BuildPagination() (string, []interface{}) {
 	return "limit $%d offset $%d", params
 }
 
-func (spq SearchProductQuery) BuildOrderByClause() ([]string, []interface{}) {
-	var (
-		sqlClause []string
-		params    []interface{}
-	)
+func (spq SearchProductQuery) BuildOrderByClause() []string {
+	var sqlClause []string
 
 	if spq.CreatedAt != "" ||
 		OrderBy(
 			spq.CreatedAt,
 		).IsValid() {
-		params = append(
-			params,
-			OrderBy(spq.CreatedAt),
+		sqlClause = append(
+			sqlClause,
+			fmt.Sprintf("created_at %s", spq.CreatedAt),
 		)
 	} else {
-		params = append(
-			params,
-			Desc,
+		sqlClause = append(
+			sqlClause,
+			"created_at desc",
 		)
 	}
-
-	sqlClause = append(
-		sqlClause,
-		"created_at $%d",
-	)
 
 	if spq.Price != "" ||
 		OrderBy(spq.Price).IsValid() {
-		params = append(
-			params,
-			OrderBy(spq.Price),
-		)
 		sqlClause = append(
 			sqlClause,
-			"price $%d",
+			fmt.Sprintf("price %s", spq.Price),
 		)
 	}
 
-	return sqlClause, params
+	return sqlClause
 }
 
 // product category
