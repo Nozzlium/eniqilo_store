@@ -5,9 +5,10 @@ import (
 	"github.com/nozzlium/eniqilo_store/internal/util"
 )
 
-type RegisterRespose struct {
+type RegisterResponse struct {
 	PhoneNumber string `json:"phoneNumber"`
 	Name        string `json:"name"`
+	AccessToken string `json:"accessToken"`
 }
 
 type LoginResponse struct {
