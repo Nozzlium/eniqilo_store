@@ -24,13 +24,13 @@ func Protected() func(*fiber.Ctx) error {
 func SetEmailAndUserID() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		user := c.Locals("userData").(*jwt.Token).Claims.(jwt.MapClaims)
-		emailByte, err := base64.RawStdEncoding.DecodeString(user["ea"].(string))
+		emailByte, err := base64.RawStdEncoding.DecodeString(user["ph"].(string))
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "invalid token"})
 		}
-		c.Locals("email", string(emailByte))
+		c.Locals("phoneNumber", string(emailByte))
 
-		userIDByte, err := base64.RawStdEncoding.DecodeString(user["ui"].(string))
+		userIDByte, err := base64.RawStdEncoding.DecodeString(user["si"].(string))
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "invalid token"})
 		}
@@ -42,7 +42,7 @@ func SetEmailAndUserID() func(*fiber.Ctx) error {
 
 func jwtError(c *fiber.Ctx, err error) error {
 	if err.Error() == "Missing or malformed JWT" {
-		c.Status(fiber.StatusBadRequest)
+		c.Status(fiber.StatusUnauthorized)
 		return c.JSON(fiber.Map{"status": "error", "message": "Missing or malformed JWT", "data": nil})
 
 	} else {

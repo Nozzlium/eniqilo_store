@@ -169,11 +169,11 @@ func generateJwtToken(
 	userID := base64.RawStdEncoding.EncodeToString(
 		[]byte(user.ID.String()),
 	)
-	email := base64.RawStdEncoding.EncodeToString(
+	phoneNumber := base64.RawStdEncoding.EncodeToString(
 		[]byte(user.PhoneNumber),
 	)
-	claims["ui"] = userID
-	claims["ea"] = email
+	claims["si"] = userID
+	claims["ph"] = phoneNumber
 	claims["exp"] = time.Now().
 		Add(time.Hour * 72).
 		Unix()
