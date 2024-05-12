@@ -17,7 +17,8 @@ func BuildQueryStringAndParams(
 	}
 
 	pagination, paginationParams := paginationBuilder()
-	fmt.Fprintf(baseQuery, fmt.Sprintf(" %s", pagination), len(params)+1, len(params)+2)
+	paramsLen := len(params)
+	fmt.Fprintf(baseQuery, fmt.Sprintf(" %s", pagination), paramsLen+1, paramsLen+2)
 	params = append(params, paginationParams...)
 
 	orderBy, orderByParams := orderByBuilder()
@@ -28,7 +29,10 @@ func BuildQueryStringAndParams(
 			if i > 1 {
 				baseQuery.WriteString(",")
 			}
-			fmt.Fprintf(baseQuery, " %s", fmt.Sprintf(clause, i))
+			// since paramsLen is counted before adding pagination params
+			// and the index starts from 0 instead of 1,
+			// we need to add 3 to the paramsLen before adding the index
+			fmt.Fprintf(baseQuery, " %s", fmt.Sprintf(clause, paramsLen+3+i))
 		}
 	}
 
