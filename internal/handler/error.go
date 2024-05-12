@@ -7,25 +7,36 @@ import (
 	"github.com/nozzlium/eniqilo_store/internal/constant"
 )
 
-func HandleError(ctx *fiber.Ctx, err ErrorResponse) error {
+func HandleError(
+	ctx *fiber.Ctx,
+	err ErrorResponse,
+) error {
 	log.Println(err.detail)
-	switch err {
+	switch err.error {
 	case constant.ErrNotFound:
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": err.message,
-		})
+		return ctx.Status(fiber.StatusNotFound).
+			JSON(fiber.Map{
+				"message": err.message,
+			})
 	case constant.ErrConflict:
-		return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{
-			"message": err.message,
-		})
-	case constant.ErrBadInput, constant.ErrInvalidBody, constant.ErrInsufficientFund, constant.ErrInvalidChange, constant.ErrInsufficientStock:
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.message,
-		})
+		return ctx.Status(fiber.StatusConflict).
+			JSON(fiber.Map{
+				"message": err.message,
+			})
+	case constant.ErrBadInput,
+		constant.ErrInvalidBody,
+		constant.ErrInsufficientFund,
+		constant.ErrInvalidChange,
+		constant.ErrInsufficientStock:
+		return ctx.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{
+				"message": err.message,
+			})
 	default:
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "internal server error",
-		})
+		return ctx.Status(fiber.StatusInternalServerError).
+			JSON(fiber.Map{
+				"message": "internal server error",
+			})
 	}
 }
 

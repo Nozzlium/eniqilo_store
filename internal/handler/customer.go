@@ -56,7 +56,7 @@ func (handler *CustomerHandler) Register(
 	var body model.CustomerRegisterBody
 	err := c.BodyParser(&body)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).
+		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{
 				"message": err.Error(),
 			})
@@ -90,10 +90,11 @@ func (handler *CustomerHandler) Register(
 		)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "success",
-		"data":    customerData,
-	})
+	return c.Status(fiber.StatusCreated).
+		JSON(fiber.Map{
+			"message": "success",
+			"data":    customerData,
+		})
 }
 
 func (handler *CustomerHandler) GetCustomers(
