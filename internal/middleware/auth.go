@@ -24,11 +24,11 @@ func Protected() func(*fiber.Ctx) error {
 func SetEmailAndUserID() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		user := c.Locals("userData").(*jwt.Token).Claims.(jwt.MapClaims)
-		emailByte, err := base64.RawStdEncoding.DecodeString(user["ph"].(string))
+		phoneNumberByte, err := base64.RawStdEncoding.DecodeString(user["ph"].(string))
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "invalid token"})
 		}
-		c.Locals("phoneNumber", string(emailByte))
+		c.Locals("phoneNumber", string(phoneNumberByte))
 
 		userIDByte, err := base64.RawStdEncoding.DecodeString(user["si"].(string))
 		if err != nil {

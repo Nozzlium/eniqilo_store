@@ -43,7 +43,7 @@ func (r *ProductRepository) Search(
 			is_available,
 			created_at
     from products p 
-    where 1=1`)
+    where deleted_at is null`)
 
 	queryString, params := util.BuildQueryStringAndParams(
 		&query,
@@ -156,7 +156,7 @@ func (r *ProductRepository) Update(ctx context.Context, product model.Product) e
     is_available = $8,
     location = $9,
     updated_at = $10,
-    updated_by = $11,
+    updated_by = $11
   where id = $12`
 
 	_, err := r.db.Exec(ctx, query,
@@ -185,7 +185,7 @@ func (r *ProductRepository) Delete(ctx context.Context, id, deletedBy uuid.UUID,
 	query := `
   update products set
     deleted_at = $1,
-    deleted_by = $2,
+    deleted_by = $2
   where id = $3`
 
 	_, err := r.db.Exec(ctx, query,
@@ -219,7 +219,7 @@ func (r *ProductRepository) FindBySKU(ctx context.Context, sku string) (model.Pr
 			location, 
 			is_available
     from products p 
-    where sku = $1`
+    where sku = $1 and deleted_at is null`
 
 	row := r.db.QueryRow(ctx, query, sku)
 	err := row.Scan(
@@ -246,7 +246,7 @@ func (r *ProductRepository) FindBySKU(ctx context.Context, sku string) (model.Pr
 	return p, nil
 }
 
-func (r *ProductRepository) FindByID(ctx context.Context, id string) (model.Product, error) {
+func (r *ProductRepository) FindByID(ctx context.Context, id uuid.UUID) (model.Product, error) {
 	var (
 		p        model.Product
 		category string
@@ -263,7 +263,7 @@ func (r *ProductRepository) FindByID(ctx context.Context, id string) (model.Prod
 			location, 
 			is_available
     from products p 
-    where id = $1`
+    where id = $1 and deleted_at is null`
 
 	row := r.db.QueryRow(ctx, query, id)
 	err := row.Scan(
@@ -299,6 +299,7 @@ func (r *ProductRepository) FindByIds(
       is_available 
     from products
     where id = any('{$1}':uuid[])
+    and deleted_at is null
   `
 	rows, err := r.db.Query(
 		ctx,

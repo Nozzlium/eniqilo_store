@@ -18,7 +18,7 @@ func main() {
 	fiberApp := fiber.New(fiber.Config{
 		JSONEncoder: sonic.Marshal,
 		JSONDecoder: sonic.Unmarshal,
-		Prefork:     true,
+		// Prefork:     true,
 	})
 
 	err := setupApp(fiberApp)
@@ -120,7 +120,10 @@ func setupApp(app *fiber.App) error {
 
 	customer := v1.Group(
 		"/customer",
-	).Use(middleware.Protected())
+	).
+		Use(middleware.Protected()).
+		Use(middleware.SetEmailAndUserID())
+
 	customer.Post(
 		"/register",
 		customerHandler.Register,

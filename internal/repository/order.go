@@ -1,10 +1,14 @@
 package repository
 
 import (
+	"bytes"
 	"context"
+	"errors"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/nozzlium/eniqilo_store/internal/model"
+	"github.com/nozzlium/eniqilo_store/internal/util"
 )
 
 type OrderRepository struct {
@@ -88,4 +92,84 @@ func (r *OrderRepository) Save(
 	}
 
 	return order, nil
+}
+
+func (r *OrderRepository) Search(ctx context.Context, searchQuery model.SearchOrderQuery) (map[uuid.UUID]model.Order, []uuid.UUID, error) {
+	var query bytes.Buffer
+	query.WriteString(`
+    select
+      o.id,
+      o.customer_id,
+      o.payment_amount,
+      o.change,
+      o.created_at,
+      op.product_id,
+      op.quantity,
+    from orders o
+    join order_product op on o.id = op.order_id
+    where 1=1`)
+
+	queryString, params := util.BuildQueryStringAndParams(
+		&query,
+		searchQuery.BuildWhereClauseAndParams,
+		searchQuery.BuildPagination,
+		searchQuery.BuildOrderByClause,
+	)
+
+	var (
+		orders   []uuid.UUID
+		orderMap = make(map[uuid.UUID]model.Order)
+	)
+	rows, err := r.db.Query(
+		ctx,
+		queryString,
+		params...)
+	if err != nil {
+		if errors.Is(
+			err,
+			pgx.ErrNoRows,
+		) {
+			return orderMap, orders, nil
+		}
+		return orderMap, orders, err
+	}
+
+	for rows.Next() {
+		var (
+			o         model.Order
+			quantity  int
+			productID uuid.UUID
+		)
+
+		err := rows.Scan(
+			&o.ID,
+			&o.CustomerID,
+			&o.PaymentAmount,
+			&o.Change,
+			&o.CreatedAt,
+			&productID,
+			&quantity,
+		)
+		if err != nil {
+			return orderMap, orders, err
+		}
+
+		om, ok := orderMap[o.ID]
+		if !ok {
+			orders = append(orders, o.ID)
+			o.ProductOrders = make([]model.ProductOrder, 0)
+		} else {
+			o = om
+		}
+
+		o.ProductOrders = append(o.ProductOrders, model.ProductOrder{
+			OrderID:   o.ID,
+			ProductID: productID,
+			Quantity:  quantity,
+		})
+
+		orderMap[o.ID] = o
+	}
+
+	return orderMap, orders, nil
 }

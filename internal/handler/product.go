@@ -136,7 +136,6 @@ func (h *ProductHandler) Update(ctx *fiber.Ctx) error {
 
 func (h *ProductHandler) Delete(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
-
 	err := h.productService.Delete(ctx.Context(), id)
 	if err != nil {
 		return HandleError(ctx,

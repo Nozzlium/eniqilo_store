@@ -108,3 +108,7 @@ func (service *OrderService) Create(
 
 	return result, nil
 }
+
+func (service *OrderService) Search(ctx context.Context, query model.SearchOrderQuery) ([]model.Order, error) {
+	return nil, nil
+}

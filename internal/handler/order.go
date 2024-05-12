@@ -47,7 +47,15 @@ func (handlers *OrderHandler) Create(
 			})
 		}
 
-		productId := uuid.MustParse(product.ProductID)
+		productId, err := uuid.Parse(product.ProductID)
+		if err != nil {
+			return HandleError(c, ErrorResponse{
+				message: "invalid product id",
+				error:   constant.ErrBadInput,
+				detail:  fmt.Sprintf("invalid product id: %s", product.ProductID),
+			})
+		}
+
 		productModels = append(
 			productModels,
 			model.ProductOrder{
@@ -62,7 +70,15 @@ func (handlers *OrderHandler) Create(
 			JSON(fiber.Map{"message": "invalid body"})
 	}
 
-	customerId := uuid.MustParse(body.CustomerID)
+	customerId, err := uuid.Parse(body.CustomerID)
+	if err != nil {
+		return HandleError(c, ErrorResponse{
+			message: "invalid customer id",
+			error:   constant.ErrBadInput,
+			detail:  fmt.Sprintf("invalid customer id: %s", body.CustomerID),
+		})
+	}
+
 	res, err := handlers.OrderService.Create(
 		c.UserContext(),
 		model.Order{

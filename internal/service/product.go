@@ -75,7 +75,12 @@ func (s ProductService) Save(ctx context.Context, product model.Product) (string
 func (s ProductService) Update(ctx context.Context, id string, product model.Product) error {
 	now := util.Now()
 
-	existingProduct, err := s.repository.FindByID(ctx, id)
+	uuidID, err := uuid.Parse(id)
+	if err != nil {
+		return constant.ErrBadInput
+	}
+
+	existingProduct, err := s.repository.FindByID(ctx, uuidID)
 	if err != nil {
 		return fmt.Errorf("failed to find product: %v", err)
 	}
@@ -98,10 +103,14 @@ func (s ProductService) Update(ctx context.Context, id string, product model.Pro
 func (s ProductService) Delete(ctx context.Context, id string) error {
 	now := util.Now()
 
-	uuidID := uuid.MustParse(id)
+	uuidID, err := uuid.Parse(id)
+	if err != nil {
+		return constant.ErrBadInput
+	}
+
 	deletedAt := now
 	deletedBy := uuid.MustParse(ctx.Value("userID").(string))
-	err := s.repository.Delete(ctx, uuidID, deletedBy, deletedAt)
+	err = s.repository.Delete(ctx, uuidID, deletedBy, deletedAt)
 	if err != nil {
 		return err
 	}

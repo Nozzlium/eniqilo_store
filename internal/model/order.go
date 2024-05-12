@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -81,4 +82,69 @@ type OrderResponseBody struct {
 	ProductDetails []ProductDetailBody `json:"productDetails"`
 	Paid           float64             `json:"paid"`
 	Change         float64             `json:"change"`
+}
+
+type SearchOrderQuery struct {
+	CustomerID string `query:"customerId"`
+	CreatedAt  string `query:"createdAt"`
+	Limit      int    `query:"limit"`
+	Offset     int    `query:"offset"`
+}
+
+func (soq SearchOrderQuery) BuildWhereClauseAndParams() ([]string, []interface{}) {
+	var (
+		sqlClause []string
+		params    []interface{}
+	)
+
+	if soq.CustomerID != "" {
+		params = append(params, soq.CustomerID)
+		sqlClause = append(
+			sqlClause,
+			"o.customer_id = $%d",
+		)
+	}
+
+	return sqlClause, params
+}
+
+func (soq SearchOrderQuery) BuildPagination() (string, []interface{}) {
+	var params []interface{}
+
+	limit := 5
+	offset := 0
+	if soq.Limit > 0 {
+		limit = soq.Limit
+	}
+	if soq.Offset > 0 {
+		offset = soq.Offset
+	}
+	params = append(
+		params,
+		limit,
+		offset,
+	)
+
+	return "limit $%d offset $%d", params
+}
+
+func (soq SearchOrderQuery) BuildOrderByClause() []string {
+	var sqlClause []string
+
+	if soq.CreatedAt != "" ||
+		OrderBy(
+			soq.CreatedAt,
+		).IsValid() {
+		sqlClause = append(
+			sqlClause,
+			fmt.Sprintf("o.created_at %s", soq.CreatedAt),
+		)
+	} else {
+		sqlClause = append(
+			sqlClause,
+			"o.created_at desc",
+		)
+	}
+
+	return sqlClause
 }
