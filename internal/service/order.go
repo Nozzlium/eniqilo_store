@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/nozzlium/eniqilo_store/internal/constant"
 	"github.com/nozzlium/eniqilo_store/internal/model"
 	"github.com/nozzlium/eniqilo_store/internal/repository"
@@ -30,20 +31,23 @@ func (service *OrderService) Create(
 	ctx context.Context,
 	order model.Order,
 ) (model.Order, error) {
-	_, err := service.customerRepository.FindByID(ctx, order.CustomerID)
+	_, err := service.customerRepository.FindByID(
+		ctx,
+		order.CustomerID,
+	)
 	if err != nil {
 		return model.Order{}, err
 	}
 
 	stringIds := make(
-		[]string,
+		[]uuid.UUID,
 		0,
 		len(order.ProductOrders),
 	)
 	for _, orderProduct := range order.ProductOrders {
 		stringIds = append(
 			stringIds,
-			orderProduct.ProductID.String(),
+			orderProduct.ProductID,
 		)
 	}
 	products, err := service.productRepository.FindByIds(
@@ -109,6 +113,9 @@ func (service *OrderService) Create(
 	return result, nil
 }
 
-func (service *OrderService) Search(ctx context.Context, query model.SearchOrderQuery) ([]model.Order, error) {
+func (service *OrderService) Search(
+	ctx context.Context,
+	query model.SearchOrderQuery,
+) ([]model.Order, error) {
 	return nil, nil
 }

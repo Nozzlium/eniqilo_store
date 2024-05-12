@@ -15,7 +15,9 @@ type OrderRepository struct {
 	db *pgx.Conn
 }
 
-func NewOrderRepository(db *pgx.Conn) *OrderRepository {
+func NewOrderRepository(
+	db *pgx.Conn,
+) *OrderRepository {
 	return &OrderRepository{db}
 }
 
@@ -49,16 +51,17 @@ func (r *OrderRepository) Save(
 	)
 
 	// create order_product entity
+	// total price not included for insersion
+	// column setup to generated always stored
 	queryOrderProduct := `
     insert into
       order_product (
         order_id,
         product_id,
         quantity,
-        price,
-        total_price
+        price
     ) values (
-      $1, $2, $3, $4, $5
+      $1, $2, $3, $4
     )
   `
 	for _, orderProduct := range order.ProductOrders {
@@ -68,7 +71,6 @@ func (r *OrderRepository) Save(
 			orderProduct.ProductID,
 			orderProduct.Quantity,
 			orderProduct.Price,
-			orderProduct.TotalPrice,
 		)
 	}
 
@@ -86,7 +88,10 @@ func (r *OrderRepository) Save(
 		)
 	}
 
-	batchRes := r.db.SendBatch(ctx, batch)
+	batchRes := r.db.SendBatch(
+		ctx,
+		batch,
+	)
 	if err := batchRes.Close(); err != nil {
 		return model.Order{}, err
 	}
@@ -94,7 +99,10 @@ func (r *OrderRepository) Save(
 	return order, nil
 }
 
-func (r *OrderRepository) Search(ctx context.Context, searchQuery model.SearchOrderQuery) (map[uuid.UUID]model.Order, []uuid.UUID, error) {
+func (r *OrderRepository) Search(
+	ctx context.Context,
+	searchQuery model.SearchOrderQuery,
+) (map[uuid.UUID]model.Order, []uuid.UUID, error) {
 	var query bytes.Buffer
 	query.WriteString(`
     select
@@ -118,7 +126,9 @@ func (r *OrderRepository) Search(ctx context.Context, searchQuery model.SearchOr
 
 	var (
 		orders   []uuid.UUID
-		orderMap = make(map[uuid.UUID]model.Order)
+		orderMap = make(
+			map[uuid.UUID]model.Order,
+		)
 	)
 	rows, err := r.db.Query(
 		ctx,
@@ -156,17 +166,26 @@ func (r *OrderRepository) Search(ctx context.Context, searchQuery model.SearchOr
 
 		om, ok := orderMap[o.ID]
 		if !ok {
-			orders = append(orders, o.ID)
-			o.ProductOrders = make([]model.ProductOrder, 0)
+			orders = append(
+				orders,
+				o.ID,
+			)
+			o.ProductOrders = make(
+				[]model.ProductOrder,
+				0,
+			)
 		} else {
 			o = om
 		}
 
-		o.ProductOrders = append(o.ProductOrders, model.ProductOrder{
-			OrderID:   o.ID,
-			ProductID: productID,
-			Quantity:  quantity,
-		})
+		o.ProductOrders = append(
+			o.ProductOrders,
+			model.ProductOrder{
+				OrderID:   o.ID,
+				ProductID: productID,
+				Quantity:  quantity,
+			},
+		)
 
 		orderMap[o.ID] = o
 	}

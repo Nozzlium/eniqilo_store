@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -143,7 +142,10 @@ func (r *ProductRepository) Save(
 	return nil
 }
 
-func (r *ProductRepository) Update(ctx context.Context, product model.Product) error {
+func (r *ProductRepository) Update(
+	ctx context.Context,
+	product model.Product,
+) error {
 	query := `
   update products set
     name = $1,
@@ -173,7 +175,6 @@ func (r *ProductRepository) Update(ctx context.Context, product model.Product) e
 		product.UpdatedBy,
 		product.ID,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -181,7 +182,11 @@ func (r *ProductRepository) Update(ctx context.Context, product model.Product) e
 	return nil
 }
 
-func (r *ProductRepository) Delete(ctx context.Context, id, deletedBy uuid.UUID, deletedAt time.Time) error {
+func (r *ProductRepository) Delete(
+	ctx context.Context,
+	id, deletedBy uuid.UUID,
+	deletedAt time.Time,
+) error {
 	query := `
   update products set
     deleted_at = $1,
@@ -193,7 +198,6 @@ func (r *ProductRepository) Delete(ctx context.Context, id, deletedBy uuid.UUID,
 		deletedBy,
 		id,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -201,7 +205,10 @@ func (r *ProductRepository) Delete(ctx context.Context, id, deletedBy uuid.UUID,
 	return nil
 }
 
-func (r *ProductRepository) FindBySKU(ctx context.Context, sku string) (model.Product, error) {
+func (r *ProductRepository) FindBySKU(
+	ctx context.Context,
+	sku string,
+) (model.Product, error) {
 	var (
 		p        model.Product
 		category string
@@ -221,7 +228,11 @@ func (r *ProductRepository) FindBySKU(ctx context.Context, sku string) (model.Pr
     from products p 
     where sku = $1 and deleted_at is null`
 
-	row := r.db.QueryRow(ctx, query, sku)
+	row := r.db.QueryRow(
+		ctx,
+		query,
+		sku,
+	)
 	err := row.Scan(
 		&p.ID,
 		&p.Name,
@@ -235,18 +246,26 @@ func (r *ProductRepository) FindBySKU(ctx context.Context, sku string) (model.Pr
 		&p.IsAvailable,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(
+			err,
+			pgx.ErrNoRows,
+		) {
 			return model.Product{}, constant.ErrNotFound
 		}
 		return p, err
 	}
 
-	p.Category = p.Category.FromDBEnumType(category)
+	p.Category = p.Category.FromDBEnumType(
+		category,
+	)
 
 	return p, nil
 }
 
-func (r *ProductRepository) FindByID(ctx context.Context, id uuid.UUID) (model.Product, error) {
+func (r *ProductRepository) FindByID(
+	ctx context.Context,
+	id uuid.UUID,
+) (model.Product, error) {
 	var (
 		p        model.Product
 		category string
@@ -281,14 +300,16 @@ func (r *ProductRepository) FindByID(ctx context.Context, id uuid.UUID) (model.P
 		return p, err
 	}
 
-	p.Category = p.Category.FromDBEnumType(category)
+	p.Category = p.Category.FromDBEnumType(
+		category,
+	)
 
 	return p, nil
 }
 
 func (r *ProductRepository) FindByIds(
 	ctx context.Context,
-	ids []string,
+	ids []uuid.UUID,
 ) (map[uuid.UUID]model.Product, error) {
 	query := `
     select 
@@ -298,13 +319,13 @@ func (r *ProductRepository) FindByIds(
       price, 
       is_available 
     from products
-    where id = any('{$1}':uuid[])
+    where id = any($1::uuid[])
     and deleted_at is null
   `
 	rows, err := r.db.Query(
 		ctx,
 		query,
-		strings.Join(ids, ","),
+		ids,
 	)
 	if err != nil {
 		return nil, err
