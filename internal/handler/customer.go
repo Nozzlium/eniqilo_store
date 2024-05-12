@@ -70,7 +70,7 @@ func (handler *CustomerHandler) Register(
 	}
 
 	customerData, err := handler.CustomerService.Create(
-		c.UserContext(),
+		c.Context(),
 		model.Customer{
 			PhoneNumber: body.PhoneNumber,
 			Name:        body.Name,
@@ -90,7 +90,7 @@ func (handler *CustomerHandler) Register(
 		)
 	}
 
-	return c.JSON(fiber.Map{
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "success",
 		"data":    customerData,
 	})
@@ -106,14 +106,24 @@ func (handler *CustomerHandler) GetCustomers(
 	name := c.Query("name", "")
 
 	customerData, err := handler.CustomerService.FindCustomers(
-		c.UserContext(),
+		c.Context(),
 		model.Customer{
 			PhoneNumber: phoneNumber,
 			Name:        name,
 		},
 	)
 	if err != nil {
-		return err
+		return HandleError(
+			c,
+			ErrorResponse{
+				message: "error get customer",
+				error:   err,
+				detail: fmt.Sprintf(
+					"error get customer: %v",
+					err.Error(),
+				),
+			},
+		)
 	}
 
 	return c.JSON(fiber.Map{
