@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/nozzlium/eniqilo_store/internal/constant"
 	"github.com/nozzlium/eniqilo_store/internal/model"
 	"github.com/nozzlium/eniqilo_store/internal/util"
 )
@@ -234,6 +235,9 @@ func (r *ProductRepository) FindBySKU(ctx context.Context, sku string) (model.Pr
 		&p.IsAvailable,
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Product{}, constant.ErrNotFound
+		}
 		return p, err
 	}
 
