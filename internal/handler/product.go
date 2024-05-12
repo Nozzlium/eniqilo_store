@@ -71,7 +71,10 @@ func (h *ProductHandler) SearchForCustomer(ctx *fiber.Ctx) error {
 		response = append(response, r)
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(response)
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "success",
+		"data":    response,
+	})
 }
 
 func (h *ProductHandler) Create(ctx *fiber.Ctx) error {
