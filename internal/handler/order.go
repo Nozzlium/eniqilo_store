@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
@@ -18,7 +17,9 @@ type OrderHandler struct {
 func NewOrderHandler(
 	orderService *service.OrderService,
 ) *OrderHandler {
-	return &OrderHandler{OrderService: orderService}
+	return &OrderHandler{
+		OrderService: orderService,
+	}
 }
 
 func (handlers *OrderHandler) Create(
@@ -27,7 +28,7 @@ func (handlers *OrderHandler) Create(
 	var body model.OrderRequestBody
 	err := c.BodyParser(&body)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).
+		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{
 				"message": err.Error(),
 			})
@@ -40,20 +41,34 @@ func (handlers *OrderHandler) Create(
 	)
 	for _, product := range body.ProductDetails {
 		if !product.IsValid() {
-			return HandleError(c, ErrorResponse{
-				message: "product quantity must be greater than 0",
-				error:   constant.ErrBadInput,
-				detail:  fmt.Sprintf("invalid quantity for product %s", product.ProductID),
-			})
+			return HandleError(
+				c,
+				ErrorResponse{
+					message: "product quantity must be greater than 0",
+					error:   constant.ErrBadInput,
+					detail: fmt.Sprintf(
+						"invalid quantity for product %s",
+						product.ProductID,
+					),
+				},
+			)
 		}
 
-		productId, err := uuid.Parse(product.ProductID)
+		productId, err := uuid.Parse(
+			product.ProductID,
+		)
 		if err != nil {
-			return HandleError(c, ErrorResponse{
-				message: "invalid product id",
-				error:   constant.ErrBadInput,
-				detail:  fmt.Sprintf("invalid product id: %s", product.ProductID),
-			})
+			return HandleError(
+				c,
+				ErrorResponse{
+					message: "invalid product id",
+					error:   constant.ErrBadInput,
+					detail: fmt.Sprintf(
+						"invalid product id: %s",
+						product.ProductID,
+					),
+				},
+			)
 		}
 
 		productModels = append(
@@ -70,17 +85,25 @@ func (handlers *OrderHandler) Create(
 			JSON(fiber.Map{"message": "invalid body"})
 	}
 
-	customerId, err := uuid.Parse(body.CustomerID)
+	customerId, err := uuid.Parse(
+		body.CustomerID,
+	)
 	if err != nil {
-		return HandleError(c, ErrorResponse{
-			message: "invalid customer id",
-			error:   constant.ErrBadInput,
-			detail:  fmt.Sprintf("invalid customer id: %s", body.CustomerID),
-		})
+		return HandleError(
+			c,
+			ErrorResponse{
+				message: "invalid customer id",
+				error:   constant.ErrBadInput,
+				detail: fmt.Sprintf(
+					"invalid customer id: %s",
+					body.CustomerID,
+				),
+			},
+		)
 	}
 
 	res, err := handlers.OrderService.Create(
-		c.UserContext(),
+		c.Context(),
 		model.Order{
 			CustomerID:    customerId,
 			PaymentAmount: body.Paid,
@@ -89,38 +112,17 @@ func (handlers *OrderHandler) Create(
 		},
 	)
 	if err != nil {
-		if errors.Is(
-			err,
-			constant.ErrNotFound,
-		) {
-			return c.Status(fiber.StatusNotFound).
-				JSON(fiber.Map{
-					"message": "not found",
-				})
-		}
-		if errors.Is(
-			err,
-			constant.ErrInsufficientFund,
-		) {
-			return c.Status(fiber.StatusBadRequest).
-				JSON(fiber.Map{"message": err.Error()})
-		}
-		if errors.Is(
-			err,
-			constant.ErrInsufficientStock,
-		) {
-			return c.Status(fiber.StatusBadRequest).
-				JSON(fiber.Map{"message": err.Error()})
-		}
-		if errors.Is(
-			err,
-			constant.ErrInvalidChange,
-		) {
-			return c.Status(fiber.StatusBadRequest).
-				JSON(fiber.Map{"message": err.Error()})
-		}
-		return c.Status(fiber.StatusInternalServerError).
-			JSON(fiber.Map{"message": err.Error()})
+		return HandleError(
+			c,
+			ErrorResponse{
+				error:   err,
+				message: err.Error(),
+				detail: fmt.Sprintf(
+					"unable to create order %v",
+					err,
+				),
+			},
+		)
 	}
 
 	return c.JSON(fiber.Map{
