@@ -21,7 +21,11 @@ type UserService struct {
 	salt   int
 }
 
-func NewUserService(repo *repository.UserRepository, secret string, salt int) *UserService {
+func NewUserService(
+	repo *repository.UserRepository,
+	secret string,
+	salt int,
+) *UserService {
 	return &UserService{
 		repo:   repo,
 		secret: secret,
@@ -38,7 +42,10 @@ func (service *UserService) Register(
 		return model.RegisterRespose{}, err
 	}
 
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), int(service.salt))
+	hashedPass, err := bcrypt.GenerateFromPassword(
+		[]byte(user.Password),
+		int(service.salt),
+	)
 	if err != nil {
 		return model.RegisterRespose{}, err
 	}
@@ -47,7 +54,11 @@ func (service *UserService) Register(
 		ctx,
 		user.PhoneNumber,
 	)
-	if err != nil && !errors.Is(constant.ErrNotFound, err) {
+	if err != nil &&
+		!errors.Is(
+			constant.ErrNotFound,
+			err,
+		) {
 		return model.RegisterRespose{}, err
 	}
 
@@ -114,35 +125,53 @@ func (service *UserService) Login(
 	}, nil
 }
 
-func (service *UserService) ValidateUserData(ctx context.Context) (bool, error) {
+func (service *UserService) ValidateUserData(
+	ctx context.Context,
+) (bool, error) {
 	userID := ctx.Value("userID").(string)
 	email := ctx.Value("email").(string)
-	_, err := service.repo.FindByPhoneNumberAndID(ctx, userID, email)
+	_, err := service.repo.FindByPhoneNumberAndID(
+		ctx,
+		userID,
+		email,
+	)
 	if err != nil {
-		if errors.Is(err, constant.ErrNotFound) {
+		if errors.Is(
+			err,
+			constant.ErrNotFound,
+		) {
 			return false, nil
 		}
 		return false, err
 	}
 
 	return true, nil
-
 }
 
 func generateJwtToken(
 	secret string,
 	user model.User,
 ) (string, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
+	token := jwt.New(
+		jwt.SigningMethodHS256,
+	)
 
 	claims := token.Claims.(jwt.MapClaims)
-	userID := base64.RawStdEncoding.EncodeToString([]byte(user.ID.String()))
-	email := base64.RawStdEncoding.EncodeToString([]byte(user.PhoneNumber))
+	userID := base64.RawStdEncoding.EncodeToString(
+		[]byte(user.ID.String()),
+	)
+	email := base64.RawStdEncoding.EncodeToString(
+		[]byte(user.PhoneNumber),
+	)
 	claims["ui"] = userID
 	claims["ea"] = email
-	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	claims["exp"] = time.Now().
+		Add(time.Hour * 72).
+		Unix()
 
-	t, err := token.SignedString([]byte(secret))
+	t, err := token.SignedString(
+		[]byte(secret),
+	)
 	if err != nil {
 		log.Println(err)
 		return "", err

@@ -18,7 +18,7 @@ func HandleError(ctx *fiber.Ctx, err ErrorResponse) error {
 		return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{
 			"message": err.message,
 		})
-	case constant.ErrBadInput:
+	case constant.ErrBadInput, constant.ErrInvalidBody, constant.ErrInsufficientFund, constant.ErrInvalidChange, constant.ErrInsufficientStock:
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.message,
 		})

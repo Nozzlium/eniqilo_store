@@ -33,7 +33,6 @@ func main() {
 }
 
 func setupApp(app *fiber.App) error {
-
 	var cfg config.Config
 	opts := env.Options{
 		TagName: "json",
@@ -50,8 +49,15 @@ func setupApp(app *fiber.App) error {
 	}
 
 	// initiate repositories
-	userRepository := repository.NewUserRepository(db)
-	productRepository := repository.NewProductRepository(db)
+	userRepository := repository.NewUserRepository(
+		db,
+	)
+	productRepository := repository.NewProductRepository(
+		db,
+	)
+	customerRepository := repository.NewCustomerRepository(
+		db,
+	)
 
 	// initiate services
 	userService := service.NewUserService(
@@ -60,11 +66,21 @@ func setupApp(app *fiber.App) error {
 		int(cfg.BCryptSalt),
 	)
 
-	productService := service.NewProductService(productRepository)
+	productService := service.NewProductService(
+		productRepository,
+	)
+	customerService := service.NewCustomerService(customerRepository)
 
 	// initiate handlers
-	authHandler := handler.NewAuthHandler(userService)
-	productHandler := handler.NewProductHandler(productService)
+	authHandler := handler.NewAuthHandler(
+		userService,
+	)
+	productHandler := handler.NewProductHandler(
+		productService,
+	)
+	customerHandler := handler.NewCustomerHandler(
+		customerService,
+	)
 
 	v1 := app.Group("/v1")
 	auth := v1.Group("/staff")
@@ -79,14 +95,43 @@ func setupApp(app *fiber.App) error {
 	)
 
 	product := v1.Group("/product")
-	product.Get("/customer", productHandler.SearchForCustomer)
+	product.Get(
+		"/customer",
+		productHandler.SearchForCustomer,
+	)
 
 	// protected routes (require authentication)
-	protectedProduct := product.Use(middleware.Protected()).Use(middleware.SetEmailAndUserID())
-	protectedProduct.Get("", productHandler.Search)
-	protectedProduct.Post("", productHandler.Create)
-	protectedProduct.Put("/:id", productHandler.Update)
-	protectedProduct.Delete("/:id", productHandler.Delete)
+	protectedProduct := product.Use(middleware.Protected()).
+		Use(middleware.SetEmailAndUserID())
+	protectedProduct.Get(
+		"",
+		productHandler.Search,
+	)
+	protectedProduct.Post(
+		"",
+		productHandler.Create,
+	)
+	protectedProduct.Put(
+		"/:id",
+		productHandler.Update,
+	)
+	protectedProduct.Delete(
+		"/:id",
+		productHandler.Delete,
+	)
+
+	customer := v1.Group(
+		"/customer",
+	)
+	customer.Use(middleware.Protected())
+	customer.Post(
+		"/register",
+		customerHandler.Register,
+	)
+	customer.Get(
+		"",
+		customerHandler.GetCustomers,
+	)
 
 	return nil
 }
