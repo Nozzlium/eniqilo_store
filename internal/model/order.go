@@ -62,17 +62,7 @@ type OrderRequestBody struct {
 }
 
 func (body OrderRequestBody) IsValid() bool {
-	if body.Paid < 1 {
-		return false
-	}
-
-	for _, product := range body.ProductDetails {
-		if !product.isValid() {
-			return false
-		}
-	}
-
-	return true
+	return body.Paid > 0 && body.Change >= 0
 }
 
 type ProductDetailBody struct {
@@ -80,12 +70,8 @@ type ProductDetailBody struct {
 	Quantity  int    `json:"quantity"`
 }
 
-func (body ProductDetailBody) isValid() bool {
-	if body.Quantity < 1 {
-		return false
-	}
-
-	return true
+func (body ProductDetailBody) IsValid() bool {
+	return body.Quantity > 0
 }
 
 type OrderResponseBody struct {

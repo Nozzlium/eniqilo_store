@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -32,16 +33,15 @@ func (handlers *OrderHandlers) Create(
 		len(body.ProductDetails),
 	)
 	for _, product := range body.ProductDetails {
-		productId, err := uuid.FromBytes(
-			[]byte(product.ProductID),
-		)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).
-				JSON(fiber.Map{
-					"message": err.Error(),
-				})
+		if !product.IsValid() {
+			return HandleError(c, ErrorResponse{
+				message: "product quantity must be greater than 0",
+				error:   constant.ErrBadInput,
+				detail:  fmt.Sprintf("invalid quantity for product %s", product.ProductID),
+			})
 		}
 
+		productId := uuid.MustParse(product.ProductID)
 		productModels = append(
 			productModels,
 			model.ProductOrder{
@@ -56,16 +56,7 @@ func (handlers *OrderHandlers) Create(
 			JSON(fiber.Map{"message": "invalid body"})
 	}
 
-	customerId, err := uuid.FromBytes(
-		[]byte(body.CustomerID),
-	)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).
-			JSON(fiber.Map{
-				"message": err.Error(),
-			})
-	}
-
+	customerId := uuid.MustParse(body.CustomerID)
 	res, err := handlers.OrderService.Create(
 		c.UserContext(),
 		model.Order{

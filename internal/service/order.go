@@ -44,7 +44,8 @@ func (service *OrderService) Create(
 		0,
 		len(order.ProductOrders),
 	)
-	for _, orderProduct := range order.ProductOrders {
+
+	for i, orderProduct := range order.ProductOrders {
 		tempProd, ok := products[orderProduct.ProductID]
 		if !ok {
 			return model.Order{}, constant.ErrNotFound
@@ -59,14 +60,15 @@ func (service *OrderService) Create(
 			orderProduct.Quantity,
 		) * tempProd.Price
 
-		orderProduct.Price = tempProd.Price
-		orderProduct.TotalPrice = itemTotal
 		tempProd.Stock = tempProd.Stock - orderProduct.Quantity
-
 		updatedProducts = append(
 			updatedProducts,
 			tempProd,
 		)
+
+		orderProduct.Price = tempProd.Price
+		orderProduct.TotalPrice = itemTotal
+		order.ProductOrders[i] = orderProduct
 
 		actualTotal += itemTotal
 	}

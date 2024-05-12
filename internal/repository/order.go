@@ -8,7 +8,11 @@ import (
 )
 
 type OrderRepository struct {
-	DB *pgx.Conn
+	db *pgx.Conn
+}
+
+func NewOrderRepository(db *pgx.Conn) *OrderRepository {
+	return &OrderRepository{db}
 }
 
 func (r *OrderRepository) Save(
@@ -16,20 +20,9 @@ func (r *OrderRepository) Save(
 	order model.Order,
 	products []model.Product,
 ) (model.Order, error) {
-	tx, err := r.DB.Begin(
-		ctx,
-	)
-	if err != nil {
-		return model.Order{}, err
-	}
-	defer func() {
-		if err != nil {
-			tx.Rollback(ctx)
-		} else {
-			tx.Commit(ctx)
-		}
-	}()
+	batch := &pgx.Batch{}
 
+	// create order entity
 	queryOrder := `
     insert into
       orders (
@@ -42,7 +35,6 @@ func (r *OrderRepository) Save(
       $1, $2, $3, $4, $5
     );
   `
-	batch := &pgx.Batch{}
 	batch.Queue(
 		queryOrder,
 		order.ID,
@@ -52,9 +44,10 @@ func (r *OrderRepository) Save(
 		order.Change,
 	)
 
+	// create order_product entity
 	queryOrderProduct := `
     insert into
-      orders (
+      order_product (
         order_id,
         product_id,
         quantity,
@@ -75,6 +68,7 @@ func (r *OrderRepository) Save(
 		)
 	}
 
+	// update product stock
 	queryUpdateStock := `
     update products 
     set quantity = $1 
@@ -88,7 +82,7 @@ func (r *OrderRepository) Save(
 		)
 	}
 
-	batchRes := tx.SendBatch(ctx, batch)
+	batchRes := r.db.SendBatch(ctx, batch)
 	if err := batchRes.Close(); err != nil {
 		return model.Order{}, err
 	}
