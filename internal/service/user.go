@@ -36,10 +36,10 @@ func NewUserService(
 func (service *UserService) Register(
 	ctx context.Context,
 	user model.User,
-) (model.RegisterRespose, error) {
+) (model.RegisterResponse, error) {
 	generatedUUID, err := uuid.NewV7()
 	if err != nil {
-		return model.RegisterRespose{}, err
+		return model.RegisterResponse{}, err
 	}
 
 	hashedPass, err := bcrypt.GenerateFromPassword(
@@ -47,7 +47,7 @@ func (service *UserService) Register(
 		int(service.salt),
 	)
 	if err != nil {
-		return model.RegisterRespose{}, err
+		return model.RegisterResponse{}, err
 	}
 
 	userResult, err := service.repo.FindByPhoneNumber(
@@ -59,11 +59,11 @@ func (service *UserService) Register(
 			constant.ErrNotFound,
 			err,
 		) {
-		return model.RegisterRespose{}, err
+		return model.RegisterResponse{}, err
 	}
 
 	if userResult.PhoneNumber == user.PhoneNumber {
-		return model.RegisterRespose{}, constant.ErrConflict
+		return model.RegisterResponse{}, constant.ErrConflict
 	}
 
 	user.ID = generatedUUID
@@ -73,12 +73,21 @@ func (service *UserService) Register(
 		user,
 	)
 	if err != nil {
-		return model.RegisterRespose{}, err
+		return model.RegisterResponse{}, err
 	}
 
-	return model.RegisterRespose{
+	accessToken, err := generateJwtToken(
+		service.secret,
+		userResult,
+	)
+	if err != nil {
+		return model.RegisterResponse{}, err
+	}
+
+	return model.RegisterResponse{
 		PhoneNumber: inserted.PhoneNumber,
 		Name:        inserted.Name,
+		AccessToken: accessToken,
 	}, nil
 }
 

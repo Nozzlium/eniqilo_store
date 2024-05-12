@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/nozzlium/eniqilo_store/internal/constant"
 	"github.com/nozzlium/eniqilo_store/internal/model"
 	"github.com/nozzlium/eniqilo_store/internal/util"
 )
@@ -16,11 +18,16 @@ type ProductRepository struct {
 	db *pgx.Conn
 }
 
-func NewProductRepository(db *pgx.Conn) *ProductRepository {
+func NewProductRepository(
+	db *pgx.Conn,
+) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (r *ProductRepository) Search(ctx context.Context, searchQuery model.SearchProductQuery) ([]model.Product, error) {
+func (r *ProductRepository) Search(
+	ctx context.Context,
+	searchQuery model.SearchProductQuery,
+) ([]model.Product, error) {
 	var query bytes.Buffer
 	query.WriteString(`
     select
@@ -46,9 +53,15 @@ func (r *ProductRepository) Search(ctx context.Context, searchQuery model.Search
 	)
 
 	var products []model.Product
-	rows, err := r.db.Query(ctx, queryString, params...)
+	rows, err := r.db.Query(
+		ctx,
+		queryString,
+		params...)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(
+			err,
+			pgx.ErrNoRows,
+		) {
 			return products, nil
 		}
 		return nil, err
@@ -77,14 +90,19 @@ func (r *ProductRepository) Search(ctx context.Context, searchQuery model.Search
 			return nil, err
 		}
 
-		p.Category = p.Category.FromDBEnumType(category)
+		p.Category = p.Category.FromDBEnumType(
+			category,
+		)
 		products = append(products, p)
 	}
 
 	return products, nil
 }
 
-func (r *ProductRepository) Save(ctx context.Context, product model.Product) error {
+func (r *ProductRepository) Save(
+	ctx context.Context,
+	product model.Product,
+) error {
 	query := `
   insert into products (
     id,
@@ -118,7 +136,6 @@ func (r *ProductRepository) Save(ctx context.Context, product model.Product) err
 		product.UpdatedAt,
 		product.CreatedBy,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -218,6 +235,9 @@ func (r *ProductRepository) FindBySKU(ctx context.Context, sku string) (model.Pr
 		&p.IsAvailable,
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Product{}, constant.ErrNotFound
+		}
 		return p, err
 	}
 
@@ -264,4 +284,50 @@ func (r *ProductRepository) FindByID(ctx context.Context, id string) (model.Prod
 	p.Category = p.Category.FromDBEnumType(category)
 
 	return p, nil
+}
+
+func (r *ProductRepository) FindByIds(
+	ctx context.Context,
+	ids []string,
+) (map[uuid.UUID]model.Product, error) {
+	query := `
+    select 
+      id, 
+      name, 
+      stock, 
+      price, 
+      is_available 
+    from products
+    where id = any('{$1}':uuid[])
+  `
+	rows, err := r.db.Query(
+		ctx,
+		query,
+		strings.Join(ids, ","),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make(
+		map[uuid.UUID]model.Product,
+	)
+	for rows.Next() {
+		temp := model.Product{}
+		err = rows.Scan(
+			&temp.ID,
+			&temp.Name,
+			&temp.Stock,
+			&temp.Price,
+			&temp.IsAvailable,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		res[temp.ID] = temp
+	}
+
+	return res, nil
 }

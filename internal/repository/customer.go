@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/nozzlium/eniqilo_store/internal/constant"
 	"github.com/nozzlium/eniqilo_store/internal/model"
@@ -63,6 +64,36 @@ func (repo *CustomerRepository) FindByPhoneNumber(
 		ctx,
 		query,
 		phoneNumber,
+	).Scan(&customer.ID, &customer.PhoneNumber, &customer.Name)
+	if err != nil {
+		if errors.Is(
+			err,
+			pgx.ErrNoRows,
+		) {
+			return customer, constant.ErrNotFound
+		}
+		return customer, err
+	}
+
+	return customer, nil
+}
+
+func (repo *CustomerRepository) FindByID(
+	ctx context.Context,
+	id uuid.UUID,
+) (model.Customer, error) {
+	query := `
+    select 
+      id, phone_number, name
+    from customers
+      where id = $1
+  `
+
+	customer := model.Customer{}
+	err := repo.db.QueryRow(
+		ctx,
+		query,
+		id,
 	).Scan(&customer.ID, &customer.PhoneNumber, &customer.Name)
 	if err != nil {
 		if errors.Is(

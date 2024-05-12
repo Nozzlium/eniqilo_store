@@ -62,7 +62,7 @@ func (handlers *AuthHandler) RegisterHandler(
 			})
 	}
 
-	return ctx.JSON(fiber.Map{
+	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "User registered successfully",
 		"data":    data,
 	})
